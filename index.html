@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0">
+    <title>Repartidor Veloz: Misión Entrega</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Montserrat:wght@700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            overflow: hidden;
+            background-color: #1f2937; /* bg-gray-800 */
+        }
+        .font-bangers {
+            font-family: 'Bangers', cursive;
+        }
+        #game-container {
+            /* Permite interacciones táctiles y evita el zoom con dos dedos */
+            touch-action: none;
+        }
+        canvas {
+            background: linear-gradient(#1e3a8a, #60a5fa); /* Cielo nocturno */
+            border-radius: 1rem;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            height: 100%;
+        }
+        .comic-button {
+            transition: transform 0.2s, box-shadow 0.2s;
+            /* Mejora la respuesta táctil */
+            -webkit-tap-highlight-color: transparent;
+        }
+        .comic-button:hover {
+            transform: translateY(-4px);
+        }
+        .comic-button:active {
+            transform: translateY(-1px);
+        }
+        .overlay {
+            background-color: rgba(17, 24, 39, 0.8);
+            backdrop-filter: blur(8px);
+        }
+        .ui-element {
+            text-shadow: 2px 2px 2px #000;
+        }
+        #message-display {
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+            transform: translateY(-20px);
+            /* Asegura que el mensaje sea visible en pantallas pequeñas */
+            font-size: 2rem; /* Ajuste para móviles */
+        }
+        #message-display.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive adjustments for smaller screens using Tailwind-like approach */
+        @media (max-width: 640px) {
+            h1.font-bangers {
+                font-size: 4rem; /* Smaller heading for mobile */
+            }
+            p.font-bangers {
+                font-size: 2rem; /* Smaller sub-heading for mobile */
+            }
+            #ui-container .font-bangers {
+                font-size: 2rem; /* Smaller UI text for mobile */
+            }
+            .comic-button {
+                font-size: 1.5rem; /* Smaller button text for mobile */
+                padding: 1rem 2rem; /* Adjust padding for mobile buttons */
+            }
+            .credits {
+                font-size: 0.875rem; /* Smaller text for credits on mobile */
+                margin-top: 1rem; /* Adjust margin for mobile */
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div id="game-wrapper" class="relative w-full max-w-lg mx-auto">
+        <canvas id="game-canvas"></canvas>
+
+        <div id="ui-container" class="absolute top-0 left-0 right-0 p-4 text-white text-center">
+            <div id="message-display" class="font-bangers text-4xl text-yellow-300 h-10 ui-element"></div>
+            <div class="w-full flex justify-between items-center mt-2">
+                <div class="font-bangers text-3xl text-slate-800 ui-element">Puntaje: <span id="score">0</span></div>
+                <div class="font-bangers text-3xl text-slate-800 ui-element">Vidas: <span id="lives">3</span></div>
+            </div>
+        </div>
+
+        <div id="modal-overlay" class="overlay absolute inset-0 rounded-2xl flex items-center justify-center">
+            <div id="start-screen" class="text-center text-white p-6">
+                <h1 class="font-bangers text-6xl sm:text-7xl text-yellow-400" style="text-shadow: 3px 3px 0 #000;">Repartidor Veloz</h1>
+                <p class="font-bangers text-3xl mt-2 text-slate-200" style="text-shadow: 2px 2px 0 #000;">Misión Entrega</p>
+                <p class="mt-4 font-bold text-lg sm:text-xl">¡Esquiva los obstáculos y entrega la comida!</p>
+                <p class="mt-2 text-sm sm:text-base">Toca la pantalla para Saltar.</p>
+                <button id="start-button" class="comic-button mt-8 bg-yellow-400 text-slate-900 font-bold text-2xl py-3 px-10 rounded-xl border-4 border-slate-900">
+                    ¡EMPEZAR!
+                </button>
+                <p class="credits mt-4 text-sm sm:text-base text-gray-300">Creado por Jason Dafnis para Liam Santiago</p>
+            </div>
+            <div id="game-over-screen" class="hidden text-center text-white p-6">
+                <h1 class="font-bangers text-7xl text-red-500" style="text-shadow: 3px 3px 0 #000;">¡Entrega Fallida!</h1>
+                <p class="mt-4 font-bold text-2xl">Puntaje Final: <span id="final-score">0</span></p>
+                <p class="mt-2 text-yellow-300 font-bold text-xl">¡Aún así, eres el más rápido de la ciudad!</p>
+                <button id="restart-button" class="comic-button mt-8 bg-yellow-400 text-slate-900 font-bold text-2xl py-3 px-10 rounded-xl border-4 border-slate-900">
+                    Nuevo Pedido
+                </button>
+                <p class="credits mt-4 text-sm sm:text-base text-gray-300">Creado por Jason Dafnis para Liam Santiago</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+
+        const scoreEl = document.getElementById('score');
+        const livesEl = document.getElementById('lives');
+        const messageDisplay = document.getElementById('message-display');
+        const modalOverlay = document.getElementById('modal-overlay');
+        const startScreen = document.getElementById('start-screen');
+        const gameOverScreen = document.getElementById('game-over-screen');
+        const startButton = document.getElementById('start-button');
+        const restartButton = document.getElementById('restart-button');
+        const finalScoreEl = document.getElementById('final-score');
+
+        // --- Game Settings & State ---
+        let score, lives, gameSpeed, scoreInterval, gameRunning, frameCount;
+        let player, obstacles, rewards, backgroundObjects;
+
+        // --- Dynamic Game Dimensions ---
+        let groundHeight, playerWidth, playerHeight, itemSize, jumpHeight, gravity;
+
+        // Define la relación de aspecto vertical deseada (alto / ancho)
+        const ASPECT_RATIO = 16 / 9; // Por ejemplo, 16 de alto por 9 de ancho
+
+        function setGameDimensions() {
+            // Dimensiones basadas en un porcentaje del alto del canvas para escalabilidad
+            groundHeight = canvas.height * 0.1;
+            playerHeight = canvas.height * 0.15;
+            playerWidth = playerHeight * 1.2; // Proporción del jugador
+            itemSize = canvas.height * 0.09;
+            jumpHeight = -(canvas.height * 0.03); // Ajuste de la altura de salto
+            gravity = canvas.height * 0.0012; // Ajuste de la gravedad
+        }
+
+        function resizeCanvas() {
+            const wrapper = document.getElementById('game-wrapper');
+            const targetWidth = wrapper.clientWidth;
+            let targetHeight = targetWidth * ASPECT_RATIO;
+
+            // Asegurarse de que el canvas no sea más alto que la ventana visible
+            if (targetHeight > window.innerHeight - (2 * 16)) { // Restamos un poco por el padding del body
+                targetHeight = window.innerHeight - (2 * 16);
+                targetWidth = targetHeight / ASPECT_RATIO;
+            }
+
+            canvas.width = targetWidth;
+            canvas.height = targetHeight;
+
+            // Centrar el wrapper si el ancho es menor al máximo
+            wrapper.style.maxWidth = `${targetWidth}px`;
+
+
+            setGameDimensions();
+            if (!gameRunning) {
+                createBackground();
+                drawInitialState();
+            }
+        }
+
+        function drawRoad() {
+            ctx.fillStyle = '#2d3748';
+            ctx.fillRect(0, canvas.height - groundHeight, canvas.width, groundHeight);
+            ctx.strokeStyle = '#f7fafc';
+            ctx.lineWidth = 5;
+            ctx.setLineDash([25, 35]);
+            const lineY = canvas.height - groundHeight / 2;
+            const offset = - (frameCount * gameSpeed) % 60;
+            ctx.beginPath();
+            ctx.moveTo(offset, lineY);
+            ctx.lineTo(canvas.width + offset, lineY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        function createBackground() {
+            backgroundObjects = [];
+            const objectCount = 5;
+            for (let i = 0; i < objectCount; i++) {
+                backgroundObjects.push({
+                    x: Math.random() * canvas.width,
+                    width: canvas.width * (Math.random() * 0.1 + 0.1),
+                    height: canvas.height * (Math.random() * 0.3 + 0.2),
+                    color: `hsl(210, 15%, ${Math.random() * 20 + 20}%)`
+                });
+            }
+        }
+
+        function drawBackground() {
+            backgroundObjects.forEach(obj => {
+                obj.x -= gameSpeed * 0.5; // Efecto de paralaje
+                if (obj.x + obj.width < 0) {
+                    obj.x = canvas.width;
+                    obj.width = canvas.width * (Math.random() * 0.1 + 0.1);
+                    obj.height = canvas.height * (Math.random() * 0.3 + 0.2);
+                }
+                ctx.fillStyle = obj.color;
+                ctx.fillRect(obj.x, canvas.height - groundHeight - obj.height, obj.width, obj.height);
+            });
+        }
+
+        function drawInitialState() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawBackground();
+            drawRoad();
+            const initialPlayer = { x: 50, y: canvas.height - groundHeight - playerHeight, width: playerWidth, height: playerHeight, isJumping: false };
+            drawPlayer(initialPlayer, 0);
+        }
+
+        function setupGame() {
+            score = 0;
+            lives = 3;
+            gameSpeed = canvas.width * 0.006;
+            scoreEl.textContent = score;
+            livesEl.textContent = lives;
+            frameCount = 0;
+
+            player = { x: 50, y: canvas.height - groundHeight - playerHeight, width: playerWidth, height: playerHeight, dy: 0, isJumping: false };
+            obstacles = [];
+            rewards = [];
+            messageDisplay.classList.remove('show');
+            createBackground();
+        }
+
+        function drawPlayer(p, frame) {
+            ctx.save();
+            ctx.translate(p.x, p.y);
+            const wheelRadius = p.height * 0.2;
+            const bounce = p.isJumping ? 0 : Math.sin(frame * 0.5) * 2;
+            ctx.save();
+            ctx.translate(wheelRadius, p.height - wheelRadius + bounce);
+            ctx.rotate(frame * gameSpeed * 0.1);
+            drawWheel(wheelRadius);
+            ctx.restore();
+            ctx.save();
+            ctx.translate(p.width - wheelRadius, p.height - wheelRadius + bounce);
+            ctx.rotate(frame * gameSpeed * 0.1);
+            drawWheel(wheelRadius);
+            ctx.restore();
+            ctx.fillStyle = '#e53e3e';
+            ctx.beginPath();
+            ctx.moveTo(wheelRadius, p.height - wheelRadius * 2);
+            ctx.quadraticCurveTo(p.width * 0.4, p.height * 0.2, p.width * 0.8, p.height * 0.6);
+            ctx.lineTo(p.width * 0.2, p.height * 0.9);
+            ctx.closePath();
+            ctx.fill();
+            ctx.fillStyle = '#2d3748';
+            ctx.fillRect(p.width * 0.4, p.height * 0.1, p.width * 0.25, p.height * 0.5);
+            ctx.fillStyle = '#fde68a';
+            ctx.beginPath();
+            ctx.arc(p.width * 0.52, p.height * 0.2, p.width * 0.15, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#d97706';
+            ctx.fillRect(p.width * 0.05, p.height * 0.3, p.width * 0.3, p.height * 0.3);
+            ctx.fillStyle = 'white';
+            ctx.font = `bold ${p.width*0.15}px sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.fillText('P', p.width * 0.2, p.height * 0.5);
+            ctx.textAlign = 'start';
+            ctx.restore();
+        }
+
+        function drawWheel(radius) {
+            ctx.fillStyle = '#1a202c'; ctx.beginPath(); ctx.arc(0, 0, radius, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#a0aec0'; ctx.beginPath(); ctx.arc(0, 0, radius * 0.6, 0, Math.PI * 2); ctx.fill();
+        }
+
+        function drawItems(items) {
+            items.forEach(item => {
+                ctx.font = `${item.height}px sans-serif`;
+                ctx.fillText(item.asset.value, item.x, item.y + item.height);
+            });
+        }
+
+        function playerJump() {
+            if (!player.isJumping && gameRunning) { player.isJumping = true; player.dy = jumpHeight; }
+        }
+
+        function update() {
+            if (!gameRunning) return;
+            frameCount++;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawBackground();
+            drawRoad();
+            if (player.isJumping) { player.y += player.dy; player.dy += gravity; }
+            if (player.y > canvas.height - groundHeight - player.height) { player.y = canvas.height - groundHeight - player.height; player.isJumping = false; player.dy = 0; }
+            drawPlayer(player, frameCount);
+
+            obstacles.forEach((obstacle, index) => {
+                obstacle.x -= gameSpeed;
+                if (checkCollision(player, obstacle)) {
+                    lives--;
+                    livesEl.textContent = lives;
+                    obstacles.splice(index, 1);
+                    if (lives <= 0) endGame();
+                } else if (obstacle.x + obstacle.width < player.x && !obstacle.dodged) {
+                    score += 10;
+                    obstacle.dodged = true;
+                }
+                scoreEl.textContent = score;
+                if (obstacle.x + obstacle.width < 0) obstacles.splice(index, 1);
+            });
+
+            rewards.forEach((reward, index) => {
+                reward.x -= gameSpeed;
+                if (checkCollision(player, reward)) {
+                    if (lives < 3) { lives++; livesEl.textContent = lives; showRewardMessage(); }
+                    else { score += 100; } // Si ya tiene 3 vidas, suma puntos en lugar de vida
+                    score += 50; // Suma puntos adicionales por recoger recompensa
+                    scoreEl.textContent = score;
+                    rewards.splice(index, 1);
+                } else if (reward.x + reward.width < 0) {
+                    rewards.splice(index, 1);
+                }
+            });
+
+            drawItems(obstacles);
+            drawItems(rewards);
+
+            requestAnimationFrame(update);
+        }
+
+        function checkCollision(p, item) {
+            // Ajustar los factores de 0.8 para hacer las colisiones menos "sensibles" si es necesario,
+            // o ajustarlos para que coincidan mejor con los gráficos de emojis.
+            return (p.x < item.x + item.width * 0.8 && p.x + p.width * 0.8 > item.x && p.y < item.y + item.height && p.y + p.height * 0.8 > item.y);
+        }
+
+        function showRewardMessage() {
+            messageDisplay.textContent = MESSAGE;
+            messageDisplay.classList.add('show');
+            setTimeout(() => { messageDisplay.classList.remove('show'); }, 2000);
+        }
+
+        function spawnObstacle() {
+            if (!gameRunning) return;
+            const asset = OBSTACLE_ASSETS[Math.floor(Math.random() * OBSTACLE_ASSETS.length)];
+            const yPos = canvas.height - groundHeight - itemSize;
+            obstacles.push({ x: canvas.width, y: yPos, width: itemSize, height: itemSize, asset: asset, dodged: false });
+            // Ajustar el tiempo de aparición para que sea más dinámico con la velocidad del juego
+            setTimeout(spawnObstacle, (Math.random() * 1500 + 1000) / (gameSpeed / (canvas.width * 0.006)));
+        }
+
+        function spawnReward() {
+            if (!gameRunning) return;
+            // Recompensas pueden aparecer en dos alturas para mayor variedad
+            const yPos = (Math.random() > 0.5) ? canvas.height - groundHeight - itemSize * 2.5 : canvas.height - groundHeight - itemSize;
+            rewards.push({ x: canvas.width, y: yPos, width: itemSize, height: itemSize, asset: { type: 'emoji', value: REWARD_EMOJI } });
+            // Ajustar el tiempo de aparición de recompensas
+            setTimeout(spawnReward, (Math.random() * 9000 + 7000) / (gameSpeed / (canvas.width * 0.006)));
+        }
+
+        function startGame() {
+            gameRunning = true;
+            modalOverlay.classList.add('hidden');
+            setupGame();
+            setTimeout(spawnObstacle, 1500);
+            setTimeout(spawnReward, 5000);
+            clearInterval(scoreInterval);
+            scoreInterval = setInterval(() => {
+                if (gameRunning) {
+                    score++;
+                    scoreEl.textContent = score;
+                    // Aumentar la velocidad del juego cada 100 puntos
+                    if (score > 0 && score % 100 === 0) gameSpeed += canvas.width * 0.0002;
+                }
+            }, 100);
+            update();
+        }
+
+        function endGame() {
+            if (!gameRunning) return;
+            gameRunning = false;
+            clearInterval(scoreInterval);
+            finalScoreEl.textContent = score;
+            modalOverlay.classList.remove('hidden');
+            gameOverScreen.classList.remove('hidden');
+            startScreen.classList.add('hidden');
+        }
+
+        function handleJump(e) {
+            // Evitar el comportamiento por defecto de 'touch' (como el scroll)
+            if (gameRunning && e.target !== startButton && e.target !== restartButton) {
+                e.preventDefault();
+                playerJump();
+            } else if (!gameRunning && e.target === canvas) { // Permitir tocar el canvas para empezar/reiniciar
+                 // Esto evita que un toque en el canvas fuera de los botones active el salto antes de empezar
+                e.preventDefault();
+            }
+        }
+
+        // Evento para teclado (mantener para desktops)
+        window.addEventListener('keydown', (e) => { if (e.code === 'Space') handleJump(e); });
+
+        // Evento para pantallas táctiles (el más importante para móvil)
+        canvas.addEventListener('touchstart', handleJump);
+        // Deshabilitar el zoom de pellizco en todo el cuerpo, pero permitir clics en botones
+        document.body.addEventListener('touchstart', (e) => {
+            if (e.target !== startButton && e.target !== restartButton) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas(); // Llamada inicial al cargar la página
+
+        startButton.addEventListener('click', () => {
+             startScreen.classList.add('hidden');
+             startGame();
+        });
+        restartButton.addEventListener('click', () => {
+             gameOverScreen.classList.add('hidden');
+             startGame();
+        });
+
+    </script>
+</body>
+</html>
