@@ -134,6 +134,14 @@
         let score, lives, gameSpeed, scoreInterval, gameRunning, frameCount;
         let player, obstacles, rewards, backgroundObjects;
 
+        // --- Game Assets (Emojis) ---
+        const OBSTACLE_ASSETS = [
+            { type: 'emoji', value: '🚧' }, // Cono de obra
+            { type: 'emoji', value: '🪨' }  // Roca
+        ];
+        const REWARD_EMOJI = '❤️'; // Corazón
+        const MESSAGE = "¡Vida Extra!";
+
         // --- Dynamic Game Dimensions ---
         let groundHeight, playerWidth, playerHeight, itemSize, jumpHeight, gravity;
 
@@ -141,30 +149,37 @@
         const ASPECT_RATIO = 16 / 9; // Por ejemplo, 16 de alto por 9 de ancho
 
         function setGameDimensions() {
-            // Dimensiones basadas en un porcentaje del alto del canvas para escalabilidad
-            groundHeight = canvas.height * 0.1;
-            playerHeight = canvas.height * 0.15;
-            playerWidth = playerHeight * 1.2; // Proporción del jugador
-            itemSize = canvas.height * 0.09;
-            jumpHeight = -(canvas.height * 0.03); // Ajuste de la altura de salto
-            gravity = canvas.height * 0.0012; // Ajuste de la gravedad
+            // Dimensiones basadas en un porcentaje del ALTO del canvas para escalabilidad
+            groundHeight = canvas.height * 0.1; // La carretera ocupa el 10% del alto
+            playerHeight = canvas.height * 0.12; // El jugador ocupa el 12% del alto
+            playerWidth = playerHeight * 1.2; // Proporción del jugador (más ancho que alto)
+            itemSize = canvas.height * 0.08; // Obstáculos/recompensas ocupan el 8% del alto
+            jumpHeight = -(canvas.height * 0.035); // Ajuste de la altura de salto
+            gravity = canvas.height * 0.0015; // Ajuste de la gravedad (más fuerte para una caída rápida)
+
+            // Ajustar gameSpeed en base al ancho del canvas
+            gameSpeed = canvas.width * 0.008; // Un poco más rápido para la vista vertical
         }
 
         function resizeCanvas() {
             const wrapper = document.getElementById('game-wrapper');
-            const targetWidth = wrapper.clientWidth;
+            const viewportWidth = window.innerWidth - (2 * 16); // Restamos padding del body
+            const viewportHeight = window.innerHeight - (2 * 16);
+
+            let targetWidth = viewportWidth;
             let targetHeight = targetWidth * ASPECT_RATIO;
 
-            // Asegurarse de que el canvas no sea más alto que la ventana visible
-            if (targetHeight > window.innerHeight - (2 * 16)) { // Restamos un poco por el padding del body
-                targetHeight = window.innerHeight - (2 * 16);
+            // Si la altura calculada es mayor que la altura disponible en la ventana,
+            // ajusta el ancho para que el canvas quepa verticalmente.
+            if (targetHeight > viewportHeight) {
+                targetHeight = viewportHeight;
                 targetWidth = targetHeight / ASPECT_RATIO;
             }
 
             canvas.width = targetWidth;
             canvas.height = targetHeight;
 
-            // Centrar el wrapper si el ancho es menor al máximo
+            // Ajusta el ancho máximo del wrapper para que el canvas se centre correctamente
             wrapper.style.maxWidth = `${targetWidth}px`;
 
 
@@ -227,7 +242,6 @@
         function setupGame() {
             score = 0;
             lives = 3;
-            gameSpeed = canvas.width * 0.006;
             scoreEl.textContent = score;
             livesEl.textContent = lives;
             frameCount = 0;
@@ -235,7 +249,7 @@
             player = { x: 50, y: canvas.height - groundHeight - playerHeight, width: playerWidth, height: playerHeight, dy: 0, isJumping: false };
             obstacles = [];
             rewards = [];
-            messageDisplay.classList.remove('show');
+            messageDisplay.classList.remove('show'); // Esconde el mensaje de vida extra
             createBackground();
         }
 
@@ -254,6 +268,7 @@
             ctx.rotate(frame * gameSpeed * 0.1);
             drawWheel(wheelRadius);
             ctx.restore();
+
             ctx.fillStyle = '#e53e3e';
             ctx.beginPath();
             ctx.moveTo(wheelRadius, p.height - wheelRadius * 2);
@@ -261,19 +276,24 @@
             ctx.lineTo(p.width * 0.2, p.height * 0.9);
             ctx.closePath();
             ctx.fill();
+
             ctx.fillStyle = '#2d3748';
             ctx.fillRect(p.width * 0.4, p.height * 0.1, p.width * 0.25, p.height * 0.5);
+
             ctx.fillStyle = '#fde68a';
             ctx.beginPath();
             ctx.arc(p.width * 0.52, p.height * 0.2, p.width * 0.15, 0, Math.PI * 2);
             ctx.fill();
+
             ctx.fillStyle = '#d97706';
             ctx.fillRect(p.width * 0.05, p.height * 0.3, p.width * 0.3, p.height * 0.3);
+
             ctx.fillStyle = 'white';
             ctx.font = `bold ${p.width*0.15}px sans-serif`;
             ctx.textAlign = 'center';
             ctx.fillText('P', p.width * 0.2, p.height * 0.5);
             ctx.textAlign = 'start';
+
             ctx.restore();
         }
 
@@ -290,17 +310,29 @@
         }
 
         function playerJump() {
-            if (!player.isJumping && gameRunning) { player.isJumping = true; player.dy = jumpHeight; }
+            if (!player.isJumping && gameRunning) {
+                player.isJumping = true;
+                player.dy = jumpHeight;
+            }
         }
 
         function update() {
             if (!gameRunning) return;
             frameCount++;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+
             drawBackground();
             drawRoad();
-            if (player.isJumping) { player.y += player.dy; player.dy += gravity; }
-            if (player.y > canvas.height - groundHeight - player.height) { player.y = canvas.height - groundHeight - player.height; player.isJumping = false; player.dy = 0; }
+
+            if (player.isJumping) {
+                player.y += player.dy;
+                player.dy += gravity;
+            }
+            if (player.y > canvas.height - groundHeight - player.height) {
+                player.y = canvas.height - groundHeight - player.height;
+                player.isJumping = false;
+                player.dy = 0;
+            }
             drawPlayer(player, frameCount);
 
             obstacles.forEach((obstacle, index) => {
@@ -309,7 +341,7 @@
                     lives--;
                     livesEl.textContent = lives;
                     obstacles.splice(index, 1);
-                    if (lives <= 0) endGame();
+                    if (lives <= 0) endGame(); // <-- Aquí se llama endGame al perder todas las vidas
                 } else if (obstacle.x + obstacle.width < player.x && !obstacle.dodged) {
                     score += 10;
                     obstacle.dodged = true;
@@ -321,9 +353,14 @@
             rewards.forEach((reward, index) => {
                 reward.x -= gameSpeed;
                 if (checkCollision(player, reward)) {
-                    if (lives < 3) { lives++; livesEl.textContent = lives; showRewardMessage(); }
-                    else { score += 100; } // Si ya tiene 3 vidas, suma puntos en lugar de vida
-                    score += 50; // Suma puntos adicionales por recoger recompensa
+                    if (lives < 3) {
+                        lives++;
+                        livesEl.textContent = lives;
+                        showRewardMessage();
+                    } else {
+                        score += 100;
+                    }
+                    score += 50;
                     scoreEl.textContent = score;
                     rewards.splice(index, 1);
                 } else if (reward.x + reward.width < 0) {
@@ -338,9 +375,12 @@
         }
 
         function checkCollision(p, item) {
-            // Ajustar los factores de 0.8 para hacer las colisiones menos "sensibles" si es necesario,
-            // o ajustarlos para que coincidan mejor con los gráficos de emojis.
-            return (p.x < item.x + item.width * 0.8 && p.x + p.width * 0.8 > item.x && p.y < item.y + item.height && p.y + p.height * 0.8 > item.y);
+            return (
+                p.x < item.x + item.width * 0.8 &&
+                p.x + p.width * 0.8 > item.x &&
+                p.y < item.y + item.height * 0.8 &&
+                p.y + p.height * 0.8 > item.y
+            );
         }
 
         function showRewardMessage() {
@@ -354,22 +394,21 @@
             const asset = OBSTACLE_ASSETS[Math.floor(Math.random() * OBSTACLE_ASSETS.length)];
             const yPos = canvas.height - groundHeight - itemSize;
             obstacles.push({ x: canvas.width, y: yPos, width: itemSize, height: itemSize, asset: asset, dodged: false });
-            // Ajustar el tiempo de aparición para que sea más dinámico con la velocidad del juego
-            setTimeout(spawnObstacle, (Math.random() * 1500 + 1000) / (gameSpeed / (canvas.width * 0.006)));
+            setTimeout(spawnObstacle, (Math.random() * 1500 + 1000) / (gameSpeed / (canvas.width * 0.008)));
         }
 
         function spawnReward() {
             if (!gameRunning) return;
-            // Recompensas pueden aparecer en dos alturas para mayor variedad
             const yPos = (Math.random() > 0.5) ? canvas.height - groundHeight - itemSize * 2.5 : canvas.height - groundHeight - itemSize;
             rewards.push({ x: canvas.width, y: yPos, width: itemSize, height: itemSize, asset: { type: 'emoji', value: REWARD_EMOJI } });
-            // Ajustar el tiempo de aparición de recompensas
-            setTimeout(spawnReward, (Math.random() * 9000 + 7000) / (gameSpeed / (canvas.width * 0.006)));
+            setTimeout(spawnReward, (Math.random() * 9000 + 7000) / (gameSpeed / (canvas.width * 0.008)));
         }
 
         function startGame() {
             gameRunning = true;
             modalOverlay.classList.add('hidden');
+            gameOverScreen.classList.add('hidden'); // Asegúrate de que la pantalla de Game Over esté oculta al iniciar
+            startScreen.classList.add('hidden'); // Asegúrate de que la pantalla de inicio esté oculta
             setupGame();
             setTimeout(spawnObstacle, 1500);
             setTimeout(spawnReward, 5000);
@@ -378,7 +417,6 @@
                 if (gameRunning) {
                     score++;
                     scoreEl.textContent = score;
-                    // Aumentar la velocidad del juego cada 100 puntos
                     if (score > 0 && score % 100 === 0) gameSpeed += canvas.width * 0.0002;
                 }
             }, 100);
@@ -390,28 +428,22 @@
             gameRunning = false;
             clearInterval(scoreInterval);
             finalScoreEl.textContent = score;
-            modalOverlay.classList.remove('hidden');
-            gameOverScreen.classList.remove('hidden');
-            startScreen.classList.add('hidden');
+            modalOverlay.classList.remove('hidden'); // Muestra el overlay
+            gameOverScreen.classList.remove('hidden'); // Muestra la pantalla de Game Over
+            startScreen.classList.add('hidden'); // Asegura que la pantalla de inicio esté oculta
         }
 
         function handleJump(e) {
-            // Evitar el comportamiento por defecto de 'touch' (como el scroll)
             if (gameRunning && e.target !== startButton && e.target !== restartButton) {
                 e.preventDefault();
                 playerJump();
-            } else if (!gameRunning && e.target === canvas) { // Permitir tocar el canvas para empezar/reiniciar
-                 // Esto evita que un toque en el canvas fuera de los botones active el salto antes de empezar
+            } else if (!gameRunning && e.target === canvas) {
                 e.preventDefault();
             }
         }
 
-        // Evento para teclado (mantener para desktops)
         window.addEventListener('keydown', (e) => { if (e.code === 'Space') handleJump(e); });
-
-        // Evento para pantallas táctiles (el más importante para móvil)
         canvas.addEventListener('touchstart', handleJump);
-        // Deshabilitar el zoom de pellizco en todo el cuerpo, pero permitir clics en botones
         document.body.addEventListener('touchstart', (e) => {
             if (e.target !== startButton && e.target !== restartButton) {
                 e.preventDefault();
@@ -419,14 +451,12 @@
         }, { passive: false });
 
         window.addEventListener('resize', resizeCanvas);
-        resizeCanvas(); // Llamada inicial al cargar la página
+        resizeCanvas();
 
         startButton.addEventListener('click', () => {
-             startScreen.classList.add('hidden');
              startGame();
         });
         restartButton.addEventListener('click', () => {
-             gameOverScreen.classList.add('hidden');
              startGame();
         });
 
