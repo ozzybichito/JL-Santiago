@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Misión Matemática: El Reto del Tiempo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        /* Base para Modo Oscuro y Centrado */
+        body {
+            font-family: 'Press Start 2P', cursive, sans-serif;
+            background-color: #2c3e50;
+            background-image: url('https://via.placeholder.com/1920x1080/1a2a3a/FFFFFF?text=Espacio+Estrellado'); /* Fondo placeholder */
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            color: #ecf0f1;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+            padding: 10px;
+            box-sizing: border-box;
+            overflow: hidden; /* Evita el scroll en móviles */
+        }
+        .game-container {
+            background-color: rgba(44, 62, 80, 0.95);
+            padding: 25px 30px;
+            border-radius: 25px;
+            box-shadow: 0 18px 36px rgba(0, 0, 0, 0.6);
+            text-align: center;
+            max-width: 768px; /* Ligeramente más ancho para tablets, pero aún controlado */
+            width: 95%; /* Ocupa el 95% del ancho disponible */
+            border: 6px solid #34495e;
+            position: relative;
+            box-sizing: border-box;
+            animation: fadeIn 1s ease-out;
+            margin: auto; /* Centra el contenedor si hay espacio extra */
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            color: #f1c40f;
+            font-size: clamp(1.8em, 5vw, 3.2em); /* Ajustado para tablets */
+            margin-bottom: 15px;
+            text-shadow: 4px 4px 10px rgba(0, 0, 0, 0.7);
+            letter-spacing: 2px;
+            line-height: 1.2;
+        }
+        h2 {
+            color: #e74c3c;
+            font-size: clamp(1.1em, 3.5vw, 1.8em); /* Ajustado para tablets */
+            margin-top: 20px;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
+        }
+
+        #score-display, #current-level-display {
+            font-size: clamp(1.3em, 4vw, 2.2em); /* Ajustado para tablets */
+            font-weight: bold;
+            color: #3498db;
+            margin-bottom: 15px;
+            border: 3px solid #3498db;
+            padding: 8px 15px; /* Más padding para el tacto */
+            border-radius: 10px;
+            background-color: #2c3e50;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
+            display: inline-block;
+            margin: 0 8px; /* Más margen */
+            min-width: 130px; /* Un poco más de ancho mínimo */
+        }
+        #current-level-display {
+            color: #2ecc71;
+            border-color: #2ecc71;
+        }
+
+        #message {
+            font-size: clamp(1em, 3.8vw, 1.8em); /* Ajustado para tablets */
+            margin-bottom: 20px;
+            min-height: 2em;
+            font-weight: bold;
+            color: #ecf0f1;
+            padding: 8px 12px; /* Más padding */
+            border-radius: 5px;
+            background-color: rgba(0, 0, 0, 0.2);
+        }
+
+        .timer-area {
+            margin: 25px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #main-timer-button {
+            font-family: 'Press Start 2P', cursive, sans-serif;
+            font-size: clamp(2.8em, 9vw, 4.5em); /* Ajustado para tablets */
+            font-weight: bold;
+            color: #f1c40f;
+            background-color: #34495e;
+            border: 7px solid #f1c40f;
+            border-radius: 50%;
+            width: clamp(180px, 45vw, 300px); /* Ajustado para tablets */
+            height: clamp(180px, 45vw, 300px); /* Ajustado para tablets */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.6);
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7);
+        }
+
+        #main-timer-button:hover {
+            background-color: #4a6480;
+            border-color: #ffd700;
+            transform: scale(1.08);
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.7);
+        }
+
+        #main-timer-button:active {
+            transform: scale(0.95);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+        }
+
+        #retry-button {
+            font-family: 'Press Start 2P', cursive, sans-serif;
+            font-size: clamp(1.1em, 3.8vw, 1.6em); /* Ajustado para tablets */
+            padding: 15px 35px; /* Más padding para el tacto */
+            background-color: #e67e22;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.4);
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            margin-top: 25px;
+        }
+
+        #retry-button:hover {
+            background-color: #d35400;
+            transform: translateY(-3px);
+        }
+        #retry-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .question-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+            animation: slideInUp 0.5s ease-out;
+        }
+
+        @keyframes slideInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        #question {
+            font-size: clamp(1.6em, 4.8vw, 2.4em); /* Ajustado para tablets */
+            margin-bottom: 25px;
+            color: #f1c40f;
+            min-height: 2.2em; /* Un poco más de altura mínima */
+            background-color: rgba(52, 73, 94, 0.7);
+            padding: 10px 15px;
+            border-radius: 10px;
+            border: 2px solid #f1c40f;
+            max-width: 95%; /* Ajuste para mejor adaptación */
+        }
+
+        #options-container {
+            display: grid;
+            grid-template-columns: 1fr; /* Una columna por defecto para móviles */
+            gap: 18px; /* Más gap para el tacto */
+            width: 100%;
+            max-width: 500px; /* Ligeramente más ancho */
+            margin-bottom: 25px;
+        }
+
+        .option-button {
+            background-color: #3498db;
+            color: white;
+            padding: 18px 25px; /* Más padding para el tacto */
+            font-size: clamp(1.2em, 4vw, 1.6em); /* Ajustado para tablets */
+            border: 2px solid #2980b9;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.15s ease, box-shadow 0.2s ease;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            font-family: 'Press Start 2P', cursive, sans-serif;
+        }
+
+        .option-button:hover {
+            background-color: #2980b9;
+            transform: translateY(-3px);
+            box-shadow: 0 7px 14px rgba(0, 0, 0, 0.4);
+        }
+
+        .option-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            background-color: #2471a3;
+        }
+
+        #map-pieces-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 30px;
+            min-height: 120px;
+            border: 4px dashed #f1c40f;
+            padding: 20px;
+            border-radius: 20px;
+            background-color: rgba(52, 73, 94, 0.8);
+            gap: 12px; /* Más gap entre las piezas */
+        }
+
+        .map-piece {
+            width: clamp(70px, 18vw, 100px); /* Ajustado para tablets */
+            height: clamp(70px, 18vw, 100px); /* Ajustado para tablets */
+            margin: 5px;
+            background-color: #7f8c8d;
+            border: 3px solid #34495e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: clamp(1em, 2.8vw, 1.4em); /* Ajustado para tablets */
+            color: #ecf0f1;
+            box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
+            transition: background-color 0.5s ease, transform 0.3s ease, border-color 0.5s ease;
+        }
+
+        .map-piece.revealed {
+            background-color: #f1c40f;
+            border-color: #e67e22;
+            font-weight: bold;
+            color: #34495e;
+            text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
+            transform: scale(1.1);
+            animation: pieceReveal 0.6s ease-out;
+        }
+
+        @keyframes pieceReveal {
+            0% { transform: scale(0.5) rotateY(90deg); opacity: 0; }
+            70% { transform: scale(1.1) rotateY(-10deg); opacity: 1; }
+            100% { transform: scale(1) rotateY(0deg); }
+        }
+
+        ul#high-scores-list {
+            list-style-type: none;
+            padding-left: 0;
+            font-size: clamp(1em, 3vw, 1.3em); /* Ajustado para tablets */
+            margin-bottom: 20px;
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px dashed #f1c40f;
+        }
+
+        ul#high-scores-list li {
+            margin: 5px 0;
+            color: #ecf0f1;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
+        }
+
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            50% { transform: translateX(10px); }
+            75% { transform: translateX(-10px); }
+            100% { transform: translateX(0); }
+        }
+
+        .shake {
+            animation: shake 0.3s ease-in-out 2;
+        }
+
+        /* Desktop specific adjustments (min-width: 600px still applies for many tablets in landscape) */
+        @media (min-width: 600px) {
+            #options-container {
+                grid-template-columns: 1fr 1fr; /* Dos columnas en pantallas más grandes */
+                gap: 20px; /* Un poco más de gap en desktop/tablet horizontal */
+            }
+        }
+        /* Further specific adjustments for larger tablets/smaller desktops */
+        @media (min-width: 768px) {
+            .game-container {
+                padding: 40px 60px; /* Más padding en contenedores más grandes */
+            }
+            h1 {
+                font-size: clamp(2.5em, 4vw, 3.5em);
+            }
+            #main-timer-button {
+                width: clamp(250px, 35vw, 350px);
+                height: clamp(250px, 35vw, 350px);
+            }
+            #question {
+                font-size: clamp(2em, 3.5vw, 2.8em);
+            }
+            .option-button {
+                font-size: clamp(1.4em, 2.5vw, 1.8em);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>Misión Matemática: El Reto del Tiempo</h1>
+        <h2>Puntajes Altos:</h2>
+        <ul id="high-scores-list"></ul>
+
+        <div>
+            <span id="score-display">Puntaje: 0</span>
+            <span id="current-level-display">Nivel: 1</span>
+        </div>
+        <p id="message">¡Pulsa el cronómetro para iniciar el acertijo!</p>
+        <div class="timer-area">
+            <div id="main-timer-button">0s</div>
+            <button id="retry-button" class="hidden">Volver a intentar</button>
+        </div>
+        <div class="question-area hidden">
+            <p id="question">¿Listo para el desafío?</p>
+            <div id="options-container"></div>
+        </div>
+        <h2>Tu Mapa del Tesoro:</h2>
+        <div id="map-pieces-container">
+            </div>
+    </div>
+
+    <audio id="correct-sound" src="https://www.soundjay.com/buttons/beep-07a.mp3" preload="auto"></audio>
+    <audio id="wrong-sound" src="https://www.soundjay.com/buttons/beep-06.mp3" preload="auto"></audio>
+    <audio id="challenge-sound" src="https://www.soundjay.com/buttons/button-20.mp3" preload="auto"></audio>
+    <audio id="tick-sound" src="https://www.soundjay.com/mechanical/sounds/clock-ticking-2.mp3" preload="auto"></audio>
+    <audio id="win-sound" src="https://www.soundjay.com/buttons/button-3.mp3" preload="auto"></audio>
+
+    <script>
+        // Obtención de elementos del DOM
+        const mainTimerButton = document.getElementById('main-timer-button');
+        const retryButton = document.getElementById('retry-button');
+        const questionElement = document.getElementById('question');
+        const optionsContainer = document.getElementById('options-container');
+        const questionArea = document.querySelector('.question-area');
+        const messageElement = document.getElementById('message');
+        const mapPiecesContainer = document.getElementById('map-pieces-container');
+        const scoreDisplay = document.getElementById('score-display');
+        const currentLevelDisplay = document.getElementById('current-level-display');
+        const correctSound = document.getElementById('correct-sound');
+        const wrongSound = document.getElementById('wrong-sound');
+        const challengeSound = document.getElementById('challenge-sound');
+        const tickSound = document.getElementById('tick-sound');
+        const winSound = document.getElementById('win-sound');
+
+        // Variables de estado del juego
+        let highScores = JSON.parse(localStorage.getItem("highScores")) || [];
+        let currentQuestion = {};
+        let mapPiecesFound = 0;
+        const totalMapPieces = 10;
+        let timerSeconds = 0;
+        let timerInterval;
+        let currentScore = 0;
+        let currentLevel = 1;
+        let gameActive = false; // Bandera para controlar si el juego está activo
+
+        // --- Funciones Auxiliares ---
+
+        /**
+         * Genera un número entero aleatorio entre min y max (inclusive).
+         * @param {number} min - El valor mínimo.
+         * @param {number} max - El valor máximo.
+         * @returns {number} Un número entero aleatorio.
+         */
+        function getRandomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        /**
+         * Mezcla aleatoriamente los elementos de un array (algoritmo de Fisher-Yates).
+         * @param {Array} array - El array a mezclar.
+         * @returns {Array} El array mezclado.
+         */
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        /**
+         * Reproduce un sonido de audio.
+         * @param {HTMLAudioElement} audioElement - El elemento de audio a reproducir.
+         */
+        function playSound(audioElement) {
+            audioElement.currentTime = 0; // Reinicia el audio para que siempre se reproduzca desde el inicio
+            audioElement.play().catch(e => console.error("Error al reproducir el sonido:", e));
+        }
+
+        // --- Funciones de Lógica del Juego ---
+
+        /**
+         * Genera una nueva pregunta matemática basada en el nivel actual.
+         */
+        function generateQuestion() {
+            let num1, num2, operation, answer, options = [];
+
+            // Lógica de dificultad basada en el nivel
+            switch (currentLevel) {
+                case 1: // Suma y Resta básica (0-10)
+                    num1 = getRandomInt(1, 10);
+                    num2 = getRandomInt(1, 10);
+                    operation = Math.random() < 0.5 ? '+' : '-';
+                    break;
+                case 2: // Suma y Resta (0-20), Multiplicación simple
+                    num1 = getRandomInt(5, 15);
+                    num2 = getRandomInt(5, 15);
+                    operation = ['+', '-', '*'][getRandomInt(0, 2)];
+                    break;
+                case 3: // Suma y Resta (0-50), Multiplicación (0-10)
+                    num1 = getRandomInt(10, 25);
+                    num2 = getRandomInt(1, 10);
+                    operation = ['+', '-', '*'][getRandomInt(0, 2)];
+                    break;
+                case 4: // Operaciones más complejas, introduce división
+                    num1 = getRandomInt(15, 30);
+                    num2 = getRandomInt(2, 10);
+                    operation = ['+', '-', '*', '/'][getRandomInt(0, 3)];
+                    if (operation === '/') {
+                        num1 = num2 * getRandomInt(2, 8); // Asegura que la división sea un número entero
+                    }
+                    break;
+                default: // Niveles altos, rangos más amplios
+                    num1 = getRandomInt(20, 50);
+                    num2 = getRandomInt(2, 15);
+                    operation = ['+', '-', '*', '/'][getRandomInt(0, 3)];
+                    if (operation === '/') {
+                        num1 = num2 * getRandomInt(2, 10);
+                    }
+                    break;
+            }
+
+            // Calcula la respuesta y actualiza el texto de la pregunta
+            switch (operation) {
+                case '+':
+                    answer = num1 + num2;
+                    questionElement.textContent = `¿Cuánto es ${num1} + ${num2}?`;
+                    break;
+                case '-':
+                    answer = num1 - num2;
+                    questionElement.textContent = `¿Cuánto es ${num1} - ${num2}?`;
+                    break;
+                case '*':
+                    answer = num1 * num2;
+                    questionElement.textContent = `¿Cuánto es ${num1} x ${num2}?`;
+                    break;
+                case '/':
+                    answer = num1 / num2;
+                    questionElement.textContent = `¿Cuánto es ${num1} ÷ ${num2}?`;
+                    break;
+            }
+
+            currentQuestion = { question: questionElement.textContent, answer: answer };
+
+            options.push(answer);
+            while (options.length < 4) {
+                let wrongAnswer;
+                do {
+                    // Genera respuestas incorrectas que no sean la correcta ni estén duplicadas
+                    wrongAnswer = answer + getRandomInt(-10, 10);
+                    if (operation === '/' && wrongAnswer !== 0) {
+                        // Para división, intenta generar múltiplos o divisores del num1
+                        wrongAnswer = num1 / getRandomInt(2, 10);
+                        if (wrongAnswer % 1 !== 0) wrongAnswer = Math.round(wrongAnswer); // Asegura que sea entero
+                    }
+                    if (wrongAnswer < 0) wrongAnswer = Math.abs(wrongAnswer); // Evita opciones negativas en niveles básicos
+                } while (options.includes(wrongAnswer) || wrongAnswer === answer || (operation === '/' && wrongAnswer % 1 !== 0));
+
+                options.push(Math.round(wrongAnswer)); // Redondea al entero más cercano
+            }
+            options = shuffleArray(options);
+
+            // Rellena los botones de opciones
+            optionsContainer.innerHTML = '';
+            options.forEach(opt => {
+                const button = document.createElement('button');
+                button.classList.add('option-button');
+                button.textContent = opt;
+                button.addEventListener('click', () => checkAnswer(opt));
+                optionsContainer.appendChild(button);
+            });
+
+            // Muestra el área de la pregunta y oculta el botón del temporizador
+            questionArea.classList.remove('hidden');
+            mainTimerButton.classList.add('hidden');
+            retryButton.classList.add('hidden');
+            messageElement.textContent = "¡Rápido! Responde correctamente.";
+            playSound(challengeSound);
+        }
+
+        /**
+         * Comprueba si la respuesta seleccionada por el usuario es correcta.
+         * @param {number} selectedAnswer - La respuesta elegida por el usuario.
+         */
+        function checkAnswer(selectedAnswer) {
+            if (!gameActive) return; // Evita responder si el juego no está activo
+
+            clearInterval(timerInterval); // Detiene el temporizador
+
+            // Deshabilita los botones y da feedback visual
+            optionsContainer.querySelectorAll('.option-button').forEach(button => {
+                button.disabled = true;
+                if (parseInt(button.textContent) === currentQuestion.answer) {
+                    button.style.backgroundColor = '#27ae60'; // Verde para correcta
+                } else if (parseInt(button.textContent) === selectedAnswer) {
+                    button.style.backgroundColor = '#c0392b'; // Rojo para incorrecta
+                }
+            });
+
+            // Pequeño retardo para mostrar el feedback visual antes de continuar
+            setTimeout(() => {
+                if (selectedAnswer === currentQuestion.answer) {
+                    currentScore += 10 * currentLevel; // Puntaje basado en el nivel
+                    mapPiecesFound++;
+                    revealMapPiece();
+                    playSound(correctSound);
+                    messageElement.textContent = "¡Correcto! Siguiente acertijo...";
+                    scoreDisplay.textContent = `Puntaje: ${currentScore}`;
+
+                    if (mapPiecesFound < totalMapPieces) {
+                        currentLevel++;
+                        currentLevelDisplay.textContent = `Nivel: ${currentLevel}`;
+                        resetTimer(); // Reinicia el temporizador para la siguiente pregunta
+                        generateQuestion(); // Genera la siguiente pregunta
+                    } else {
+                        endGame(true); // ¡El jugador ha ganado!
+                    }
+                } else {
+                    playSound(wrongSound);
+                    messageElement.textContent = "¡Incorrecto! Intenta de nuevo...";
+                    endGame(false); // El jugador ha perdido
+                }
+            }, 700); // Retardo de 0.7 segundos
+        }
+
+        /**
+         * Inicia el temporizador del juego y el flujo de preguntas.
+         */
+        function startTimer() {
+            if (gameActive) return; // Evita iniciar múltiples temporizadores
+            gameActive = true;
+            timerSeconds = 0;
+            mainTimerButton.textContent = "0s";
+            mainTimerButton.classList.remove('hidden'); // Asegura que el botón del temporizador sea visible
+            questionArea.classList.add('hidden'); // Oculta el área de preguntas al inicio
+
+            messageElement.textContent = "¡El tiempo corre!";
+
+            timerInterval = setInterval(() => {
+                timerSeconds++;
+                mainTimerButton.textContent = `${timerSeconds}s`;
+                if (timerSeconds % 5 === 0) { // Reproduce el sonido de "tick" cada 5 segundos
+                    playSound(tickSound);
+                }
+            }, 1000);
+
+            // Inicia la primera pregunta después de un breve retraso
+            setTimeout(() => {
+                generateQuestion();
+            }, 1500);
+        }
+
+        /**
+         * Reinicia el temporizador del juego.
+         */
+        function resetTimer() {
+            clearInterval(timerInterval);
+            timerSeconds = 0;
+            mainTimerButton.textContent = "0s"; // Reinicia la visualización del temporizador
+        }
+
+        /**
+         * Revela una pieza del mapa.
+         */
+        function revealMapPiece() {
+            const piece = document.getElementById(`map-piece-${mapPiecesFound}`);
+            if (piece) {
+                piece.classList.add('revealed');
+                piece.textContent = mapPiecesFound; // Muestra el número de la pieza
+            }
+        }
+
+        /**
+         * Termina el juego, muestra el resultado y la opción de reintentar.
+         * @param {boolean} won - Verdadero si el jugador ganó, falso si perdió.
+         */
+        function endGame(won) {
+            gameActive = false;
+            clearInterval(timerInterval);
+            optionsContainer.innerHTML = ''; // Limpia las opciones
+            questionArea.classList.add('hidden'); // Oculta el área de preguntas
+            mainTimerButton.classList.remove('hidden'); // Muestra el botón del temporizador
+            mainTimerButton.textContent = `${timerSeconds}s`; // Muestra el tiempo final
+
+            if (won) {
+                playSound(winSound);
+                messageElement.textContent = `¡Felicidades! Has completado el mapa en ${timerSeconds} segundos con ${currentScore} puntos.`;
+                updateHighScores(currentScore);
+            } else {
+                messageElement.textContent = `¡Tiempo agotado o respuesta incorrecta! Tu puntaje final: ${currentScore}.`;
+                updateHighScores(currentScore); // Actualiza el puntaje aunque se pierda
+            }
+            retryButton.classList.remove("hidden"); // Muestra el botón de reintentar
+        }
+
+        /**
+         * Actualiza la lista de puntajes altos guardados en localStorage.
+         * @param {number} score - El puntaje obtenido en la partida actual.
+         */
+        function updateHighScores(score) {
+            highScores.push(score);
+            highScores.sort((a, b) => b - a); // Ordena de mayor a menor
+            highScores = highScores.slice(0, 3); // Mantiene solo los 3 mejores
+            localStorage.setItem("highScores", JSON.stringify(highScores));
+            updateHighScoresDisplay(); // Actualiza la visualización de los puntajes
+        }
+
+        /**
+         * Actualiza la lista de puntajes altos en la interfaz de usuario.
+         */
+        function updateHighScoresDisplay() {
+            const highScoresList = document.getElementById("high-scores-list");
+            highScoresList.innerHTML = highScores.map((score, i) =>
+                `<li>${i + 1}. ${score} puntos</li>`
+            ).join("");
+        }
+
+        /**
+         * Reinicia el juego a su estado inicial.
+         */
+        function resetGame() {
+            mapPiecesFound = 0;
+            currentScore = 0;
+            currentLevel = 1;
+            scoreDisplay.textContent = `Puntaje: ${currentScore}`;
+            currentLevelDisplay.textContent = `Nivel: ${currentLevel}`;
+            messageElement.textContent = "¡Pulsa el cronómetro para iniciar el acertijo!";
+            mainTimerButton.textContent = "0s";
+            questionArea.classList.add("hidden");
+            retryButton.classList.add("hidden");
+            mainTimerButton.classList.remove('hidden'); // Asegura que el botón del temporizador esté visible para iniciar
+            gameActive = false; // Reinicia el estado del juego
+
+            // Regenera las piezas del mapa
+            mapPiecesContainer.innerHTML = '';
+            for (let i = 1; i <= totalMapPieces; i++) {
+                const piece = document.createElement('div');
+                piece.classList.add('map-piece');
+                piece.id = `map-piece-${i}`;
+                piece.textContent = '?';
+                mapPiecesContainer.appendChild(piece);
+            }
+            updateHighScoresDisplay(); // Actualiza la visualización de los puntajes al reiniciar
+        }
+
+        // --- Event Listeners y Configuración Inicial ---
+
+        // Se ejecuta cuando el DOM está completamente cargado
+        document.addEventListener('DOMContentLoaded', () => {
+            resetGame(); // Establece el juego en su estado inicial
+        });
+
+        // Manejador de clic para el botón principal del temporizador
+        mainTimerButton.addEventListener('click', () => {
+            if (!gameActive) {
+                resetGame(); // Reinicia el juego antes de iniciar uno nuevo
+                startTimer(); // Inicia el temporizador y el juego
+            }
+        });
+
+        // Manejador de clic para el botón de reintentar
+        retryButton.addEventListener("click", () => {
+            resetGame(); // Reinicia el juego
+        });
+    </script>
+</body>
+</html>
