@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Misión Matemática: El Reto del Tiempo</title>
+    <title>Misión Matemática</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         /* Base para Modo Oscuro y Centrado */
@@ -17,7 +17,7 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
+            min-height: 100dvh; /* Usa 100dvh para mejor compatibilidad móvil */
             margin: 0;
             color: #ecf0f1;
             text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
@@ -322,7 +322,7 @@
 </head>
 <body>
     <div class="game-container">
-        <h1>Misión Matemática: El Reto del Tiempo</h1>
+        <h1>Misión Matemática</h1>
         <h2>Puntajes Altos:</h2>
         <ul id="high-scores-list"></ul>
 
@@ -426,16 +426,20 @@
                     num1 = getRandomInt(1, 10);
                     num2 = getRandomInt(1, 10);
                     operation = Math.random() < 0.5 ? '+' : '-';
+                    // Asegura que la resta no dé negativo en el nivel 1
+                    if (operation === '-' && num1 < num2) [num1, num2] = [num2, num1];
                     break;
                 case 2: // Suma y Resta (0-20), Multiplicación simple
                     num1 = getRandomInt(5, 15);
                     num2 = getRandomInt(5, 15);
                     operation = ['+', '-', '*'][getRandomInt(0, 2)];
+                     if (operation === '-' && num1 < num2) [num1, num2] = [num2, num1];
                     break;
                 case 3: // Suma y Resta (0-50), Multiplicación (0-10)
                     num1 = getRandomInt(10, 25);
                     num2 = getRandomInt(1, 10);
                     operation = ['+', '-', '*'][getRandomInt(0, 2)];
+                    if (operation === '-' && num1 < num2) [num1, num2] = [num2, num1];
                     break;
                 case 4: // Operaciones más complejas, introduce división
                     num1 = getRandomInt(15, 30);
@@ -443,6 +447,8 @@
                     operation = ['+', '-', '*', '/'][getRandomInt(0, 3)];
                     if (operation === '/') {
                         num1 = num2 * getRandomInt(2, 8); // Asegura que la división sea un número entero
+                    } else if (operation === '-' && num1 < num2) {
+                        [num1, num2] = [num2, num1];
                     }
                     break;
                 default: // Niveles altos, rangos más amplios
@@ -451,45 +457,39 @@
                     operation = ['+', '-', '*', '/'][getRandomInt(0, 3)];
                     if (operation === '/') {
                         num1 = num2 * getRandomInt(2, 10);
+                    } else if (operation === '-' && num1 < num2) {
+                        [num1, num2] = [num2, num1];
                     }
                     break;
             }
 
-            // Calcula la respuesta y actualiza el texto de la pregunta
+            // Calcula la respuesta
             switch (operation) {
-                case '+':
-                    answer = num1 + num2;
-                    questionElement.textContent = `¿Cuánto es ${num1} + ${num2}?`;
-                    break;
-                case '-':
-                    answer = num1 - num2;
-                    questionElement.textContent = `¿Cuánto es ${num1} - ${num2}?`;
-                    break;
-                case '*':
-                    answer = num1 * num2;
-                    questionElement.textContent = `¿Cuánto es ${num1} x ${num2}?`;
-                    break;
-                case '/':
-                    answer = num1 / num2;
-                    questionElement.textContent = `¿Cuánto es ${num1} ÷ ${num2}?`;
-                    break;
+                case '+': answer = num1 + num2; break;
+                case '-': answer = num1 - num2; break;
+                case '*': answer = num1 * num2; break;
+                case '/': answer = num1 / num2; break;
             }
-
+            
+            questionElement.textContent = `¿Cuánto es ${num1} ${operation} ${num2}?`;
             currentQuestion = { question: questionElement.textContent, answer: answer };
 
             options.push(answer);
             while (options.length < 4) {
                 let wrongAnswer;
                 do {
-                    // Genera respuestas incorrectas que no sean la correcta ni estén duplicadas
-                    wrongAnswer = answer + getRandomInt(-10, 10);
-                    if (operation === '/' && wrongAnswer !== 0) {
-                        // Para división, intenta generar múltiplos o divisores del num1
-                        wrongAnswer = num1 / getRandomInt(2, 10);
-                        if (wrongAnswer % 1 !== 0) wrongAnswer = Math.round(wrongAnswer); // Asegura que sea entero
+                    // Genera respuestas incorrectas cercanas a la correcta, pero no iguales
+                    wrongAnswer = answer + getRandomInt(-Math.max(2, Math.floor(answer * 0.2)), Math.max(2, Math.floor(answer * 0.2)));
+                    // Asegura que no sea 0 si la respuesta correcta no lo es y si la operación no es de resta que pueda resultar en 0
+                    if (wrongAnswer === 0 && answer !== 0) {
+                        wrongAnswer = getRandomInt(1, 10); // Evita 0 si la respuesta no es 0
                     }
-                    if (wrongAnswer < 0) wrongAnswer = Math.abs(wrongAnswer); // Evita opciones negativas en niveles básicos
-                } while (options.includes(wrongAnswer) || wrongAnswer === answer || (operation === '/' && wrongAnswer % 1 !== 0));
+                    if (wrongAnswer < 0) wrongAnswer = Math.abs(wrongAnswer); // Evita opciones negativas a menos que la respuesta lo sea
+                    // Para división, asegúrate de que no genere decimales si la respuesta es entera
+                    if (operation === '/' && wrongAnswer % 1 !== 0) {
+                        wrongAnswer = Math.round(wrongAnswer); // Redondea al entero más cercano
+                    }
+                } while (options.includes(wrongAnswer) || wrongAnswer === answer);
 
                 options.push(Math.round(wrongAnswer)); // Redondea al entero más cercano
             }
@@ -520,10 +520,11 @@
         function checkAnswer(selectedAnswer) {
             if (!gameActive) return; // Evita responder si el juego no está activo
 
-            clearInterval(timerInterval); // Detiene el temporizador
+            clearInterval(timerInterval); // Detiene el temporizador inmediatamente al responder
 
             // Deshabilita los botones y da feedback visual
-            optionsContainer.querySelectorAll('.option-button').forEach(button => {
+            const optionButtons = optionsContainer.querySelectorAll('.option-button');
+            optionButtons.forEach(button => {
                 button.disabled = true;
                 if (parseInt(button.textContent) === currentQuestion.answer) {
                     button.style.backgroundColor = '#27ae60'; // Verde para correcta
@@ -552,7 +553,11 @@
                     }
                 } else {
                     playSound(wrongSound);
-                    messageElement.textContent = "¡Incorrecto! Intenta de nuevo...";
+                    messageElement.textContent = `¡Incorrecto! La respuesta era ${currentQuestion.answer}.`;
+                    questionElement.classList.add('shake'); // Agrega la animación de "shake"
+                    setTimeout(() => {
+                        questionElement.classList.remove('shake'); // Elimina la animación después de un tiempo
+                    }, 600); // Duración de la animación
                     endGame(false); // El jugador ha perdido
                 }
             }, 700); // Retardo de 0.7 segundos
@@ -574,8 +579,9 @@
             timerInterval = setInterval(() => {
                 timerSeconds++;
                 mainTimerButton.textContent = `${timerSeconds}s`;
-                if (timerSeconds % 5 === 0) { // Reproduce el sonido de "tick" cada 5 segundos
-                    playSound(tickSound);
+                // Solo reproduce el sonido de tick si una pregunta está activa y el jugador está respondiendo
+                if (gameActive && !questionArea.classList.contains('hidden') && timerSeconds % 5 === 0) {
+                     playSound(tickSound);
                 }
             }, 1000);
 
@@ -598,6 +604,7 @@
          * Revela una pieza del mapa.
          */
         function revealMapPiece() {
+            // mapPiecesFound ya ha sido incrementado en checkAnswer
             const piece = document.getElementById(`map-piece-${mapPiecesFound}`);
             if (piece) {
                 piece.classList.add('revealed');
@@ -665,6 +672,7 @@
             retryButton.classList.add("hidden");
             mainTimerButton.classList.remove('hidden'); // Asegura que el botón del temporizador esté visible para iniciar
             gameActive = false; // Reinicia el estado del juego
+            clearInterval(timerInterval); // Asegura que no haya un temporizador corriendo
 
             // Regenera las piezas del mapa
             mapPiecesContainer.innerHTML = '';
@@ -689,7 +697,7 @@
         mainTimerButton.addEventListener('click', () => {
             if (!gameActive) {
                 resetGame(); // Reinicia el juego antes de iniciar uno nuevo
-                startTimer(); // Inicia el temporizador y el juego
+                startTimer(); // Inicia el temporador y el juego
             }
         });
 
