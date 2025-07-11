@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Misión Matemática</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
@@ -17,141 +17,227 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            min-height: 100dvh; /* Usa 100dvh para mejor compatibilidad móvil */
+            height: 100dvh; /* Usa 100dvh para ocupar toda la altura del viewport */
             margin: 0;
             color: #ecf0f1;
             text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
-            padding: 10px;
+            padding: 5px; /* Reducido el padding general */
             box-sizing: border-box;
-            overflow: hidden; /* Evita el scroll en móviles */
+            overflow: hidden; /* ¡Crucial para evitar el scroll! */
+            position: relative; /* Para posicionar elementos fijos */
         }
-        .game-container {
-            background-color: rgba(44, 62, 80, 0.95);
-            padding: 25px 30px;
-            border-radius: 25px;
-            box-shadow: 0 18px 36px rgba(0, 0, 0, 0.6);
+
+        /* --- Splash Screen --- */
+        .splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #1a2a3a;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+            color: #f1c40f;
             text-align: center;
-            max-width: 768px; /* Ligeramente más ancho para tablets, pero aún controlado */
-            width: 95%; /* Ocupa el 95% del ancho disponible */
-            border: 6px solid #34495e;
-            position: relative;
-            box-sizing: border-box;
-            animation: fadeIn 1s ease-out;
-            margin: auto; /* Centra el contenedor si hay espacio extra */
+            opacity: 0;
+            animation: fadeIn 1s ease-out forwards;
+        }
+        
+        .splash-screen.high-score {
+            background-color: #0d1a26; /* Un color diferente para el splash de high score */
+            color: #2ecc71; /* Color de texto diferente */
+        }
+
+        .splash-screen h1 {
+            font-size: clamp(1.2em, 4.5vw, 2.0em); /* Ajustado para ser similar al tamaño del párrafo */
+            margin-bottom: 20px;
+            text-shadow: 4px 4px 10px rgba(0, 0, 0, 0.8);
+            color: #f1c40f;
+            letter-spacing: 2px;
+        }
+        
+        .splash-screen.high-score h1 {
+            color: #2ecc71; /* Color de texto diferente para el h1 del high score splash */
+        }
+
+        .splash-screen p {
+            font-size: clamp(0.7em, 2.5vw, 1.2em); /* Reduced font size for intro text */
+            color: #ecf0f1;
+            animation: pulse 1.5s infinite alternate; /* Animación de "pulsación" */
+        }
+        
+        .splash-screen.high-score p {
+             color: #3498db;
+             animation: none; /* No animar el texto en el high score splash */
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 1; transform: translateY(0); }
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
-        h1 {
-            color: #f1c40f;
-            font-size: clamp(1.8em, 5vw, 3.2em); /* Ajustado para tablets */
-            margin-bottom: 15px;
-            text-shadow: 4px 4px 10px rgba(0, 0, 0, 0.7);
-            letter-spacing: 2px;
-            line-height: 1.2;
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; display: none; } /* Oculta completamente al final */
         }
-        h2 {
-            color: #e74c3c;
-            font-size: clamp(1.1em, 3.5vw, 1.8em); /* Ajustado para tablets */
-            margin-top: 20px;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
+
+        @keyframes pulse {
+            from { transform: scale(1); opacity: 1; }
+            to { transform: scale(1.05); opacity: 0.8; }
+        }
+
+        /* --- Game Container --- */
+        .game-container {
+            background-color: rgba(44, 62, 80, 0.95);
+            padding: 10px 15px; /* Más compacto */
+            border-radius: 15px; /* Borde más pequeño */
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.6); /* Sombra ajustada */
+            text-align: center;
+            max-width: 600px; /* Ancho máximo ajustado */
+            width: 98%; /* Ocupa casi todo el ancho */
+            border: 4px solid #34495e; /* Borde más delgado */
+            position: relative;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between; /* Distribuye el espacio entre elementos */
+            flex-grow: 1; /* Permite que ocupe el espacio disponible */
+            min-height: calc(100dvh - 10px); /* Ajusta la altura mínima para que encaje */
+            opacity: 0; /* Oculto inicialmente */
+            transition: opacity 0.5s ease-in;
+        }
+        
+        .game-container.show {
+            opacity: 1;
+        }
+
+        /* Título del juego principal (se ocultará después del splash) */
+        .game-title {
+            color: #f1c40f;
+            font-size: clamp(1.4em, 4vw, 2.5em); /* Ligeramente más pequeño, ya que no es el foco principal */
+            margin-bottom: 5px; /* Margen muy reducido */
+            text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.7);
+            letter-spacing: 1px;
+            line-height: 1.1;
+            /* Se ocultará con JavaScript */
+            display: none; 
+        }
+        
+        .score-level-bar {
+            display: flex;
+            flex-direction: column; /* Changed to column to stack items */
+            align-items: center;   /* Center items horizontally within the column */
+            width: 100%;
+            max-width: 400px; /* Ancho máximo para la barra */
+            margin-bottom: 10px; /* Margen reducido */
+            padding-top: 5px; /* Pequeño padding superior para compensar el título oculto */
         }
 
         #score-display, #current-level-display {
-            font-size: clamp(1.3em, 4vw, 2.2em); /* Ajustado para tablets */
+            font-size: clamp(1em, 3.2vw, 1.6em); /* Fuente más pequeña */
             font-weight: bold;
-            color: #3498db;
-            margin-bottom: 15px;
-            border: 3px solid #3498db;
-            padding: 8px 15px; /* Más padding para el tacto */
-            border-radius: 10px;
+            border: 2px solid;
+            padding: 5px 8px; /* Padding reducido */
+            border-radius: 6px;
             background-color: #2c3e50;
-            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
-            display: inline-block;
-            margin: 0 8px; /* Más margen */
-            min-width: 130px; /* Un poco más de ancho mínimo */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+            white-space: nowrap; /* Evita que el texto se rompa */
+            width: 100%; /* Take full width of parent column */
+            box-sizing: border-box; /* Include padding and border in the width */
+            text-align: center !important; /* Center text for both when stacked */
         }
+        
+        #score-display {
+            color: #3498db;
+            border-color: #3498db;
+            margin-bottom: 8px; /* Add vertical spacing below score */
+        }
+
         #current-level-display {
             color: #2ecc71;
             border-color: #2ecc71;
         }
 
         #message {
-            font-size: clamp(1em, 3.8vw, 1.8em); /* Ajustado para tablets */
-            margin-bottom: 20px;
-            min-height: 2em;
+            font-size: clamp(0.8em, 3vw, 1.4em); /* Fuente más pequeña */
+            margin-bottom: 10px; /* Margen reducido */
+            min-height: 1.5em; /* Altura mínima ajustada */
             font-weight: bold;
             color: #ecf0f1;
-            padding: 8px 12px; /* Más padding */
+            padding: 5px 8px; /* Padding reducido */
             border-radius: 5px;
             background-color: rgba(0, 0, 0, 0.2);
+            width: 100%;
+            box-sizing: border-box;
+            word-wrap: break-word;
         }
 
         .timer-area {
-            margin: 25px 0;
+            margin: 10px 0; /* Margen reducido */
             display: flex;
             flex-direction: column;
             align-items: center;
+            flex-grow: 0;
         }
 
         #main-timer-button {
             font-family: 'Press Start 2P', cursive, sans-serif;
-            font-size: clamp(2.8em, 9vw, 4.5em); /* Ajustado para tablets */
+            font-size: clamp(2em, 7vw, 3.5em); /* Fuente más pequeña */
             font-weight: bold;
             color: #f1c40f;
             background-color: #34495e;
-            border: 7px solid #f1c40f;
+            border: 5px solid #f1c40f; /* Borde más delgado */
             border-radius: 50%;
-            width: clamp(180px, 45vw, 300px); /* Ajustado para tablets */
-            height: clamp(180px, 45vw, 300px); /* Ajustado para tablets */
+            width: clamp(140px, 38vw, 220px); /* Tamaños más pequeños */
+            height: clamp(140px, 38vw, 220px); /* Tamaños más pequeños */
             display: flex;
             justify-content: center;
             align-items: center;
             cursor: pointer;
             transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.6);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.6); /* Sombra ajustada */
             user-select: none;
             -webkit-tap-highlight-color: transparent;
-            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
         }
 
         #main-timer-button:hover {
             background-color: #4a6480;
             border-color: #ffd700;
-            transform: scale(1.08);
-            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.7);
+            transform: scale(1.03);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.7);
         }
 
         #main-timer-button:active {
-            transform: scale(0.95);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+            transform: scale(0.96);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
         }
 
-        #retry-button {
+        #retry-button, #play-again-button {
             font-family: 'Press Start 2P', cursive, sans-serif;
-            font-size: clamp(1.1em, 3.8vw, 1.6em); /* Ajustado para tablets */
-            padding: 15px 35px; /* Más padding para el tacto */
+            font-size: clamp(0.9em, 3vw, 1.3em); /* Fuente más pequeña */
+            padding: 10px 20px; /* Padding reducido */
             background-color: #e67e22;
             color: white;
             border: none;
-            border-radius: 12px;
+            border-radius: 8px; /* Radio de borde más pequeño */
             cursor: pointer;
-            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
             transition: background-color 0.3s ease, transform 0.2s ease;
-            margin-top: 25px;
+            margin-top: 10px; /* Margen reducido */
         }
 
-        #retry-button:hover {
+        #retry-button:hover, #play-again-button:hover {
             background-color: #d35400;
-            transform: translateY(-3px);
+            transform: translateY(-1px);
         }
-        #retry-button:active {
+        #retry-button:active, #play-again-button:active {
             transform: translateY(0);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
         }
 
         .hidden {
@@ -162,8 +248,11 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin-top: 20px;
+            margin-top: 10px; /* Margen reducido */
             animation: slideInUp 0.5s ease-out;
+            width: 100%;
+            flex-grow: 1; /* Permite que ocupe el espacio disponible */
+            justify-content: center; /* Centra verticalmente si hay espacio */
         }
 
         @keyframes slideInUp {
@@ -172,78 +261,198 @@
         }
 
         #question {
-            font-size: clamp(1.6em, 4.8vw, 2.4em); /* Ajustado para tablets */
-            margin-bottom: 25px;
+            font-size: clamp(1.2em, 4vw, 2em); /* Fuente más pequeña */
+            margin-bottom: 15px; /* Margen reducido */
             color: #f1c40f;
-            min-height: 2.2em; /* Un poco más de altura mínima */
+            min-height: 1.8em; /* Altura mínima ajustada */
             background-color: rgba(52, 73, 94, 0.7);
-            padding: 10px 15px;
-            border-radius: 10px;
+            padding: 6px 10px; /* Padding reducido */
+            border-radius: 6px;
             border: 2px solid #f1c40f;
-            max-width: 95%; /* Ajuste para mejor adaptación */
+            max-width: 95%;
+            box-sizing: border-box;
+            word-wrap: break-word;
         }
 
         #options-container {
             display: grid;
             grid-template-columns: 1fr; /* Una columna por defecto para móviles */
-            gap: 18px; /* Más gap para el tacto */
+            gap: 10px; /* Gap reducido */
             width: 100%;
-            max-width: 500px; /* Ligeramente más ancho */
-            margin-bottom: 25px;
+            max-width: 350px; /* Ancho máximo ajustado */
+            margin-bottom: 10px; /* Margen reducido */
         }
 
         .option-button {
             background-color: #3498db;
             color: white;
-            padding: 18px 25px; /* Más padding para el tacto */
-            font-size: clamp(1.2em, 4vw, 1.6em); /* Ajustado para tablets */
+            padding: 12px 18px; /* Padding reducido */
+            font-size: clamp(1em, 3.5vw, 1.4em); /* Fuente más pequeña */
             border: 2px solid #2980b9;
-            border-radius: 10px;
+            border-radius: 6px;
             cursor: pointer;
             transition: background-color 0.3s ease, transform 0.15s ease, box-shadow 0.2s ease;
-            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
             text-align: center;
             font-family: 'Press Start 2P', cursive, sans-serif;
         }
 
         .option-button:hover {
             background-color: #2980b9;
-            transform: translateY(-3px);
-            box-shadow: 0 7px 14px rgba(0, 0, 0, 0.4);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
         }
 
         .option-button:active {
             transform: translateY(0);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
             background-color: #2471a3;
+        }
+
+        /* Botones flotantes de información */
+        .info-button {
+            position: fixed;
+            bottom: 8px; /* Ajustado más abajo y cerca del borde */
+            width: 45px; /* Tamaño más pequeño */
+            height: 45px; /* Tamaño más pequeño */
+            border-radius: 50%;
+            background-color: #f1c40f;
+            color: #2c3e50;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Press Start 2P', cursive, sans-serif;
+            font-size: 1.5em; /* Fuente más pequeña */
+            cursor: pointer;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.5);
+            transition: transform 0.2s ease, background-color 0.3s ease;
+            z-index: 100;
+        }
+
+        .info-button:hover {
+            transform: scale(1.06);
+            background-color: #e67e22;
+        }
+
+        #high-scores-toggle {
+            right: 8px; /* Ajustado más cerca del borde */
+        }
+
+        #map-toggle {
+            left: 8px; /* Ajustado más cerca del borde */
+        }
+
+        /* Modal de información */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 101;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.85);
+            justify-content: center;
+            align-items: center;
+            padding: 8px; /* Padding reducido */
+            box-sizing: border-box;
+        }
+
+        .modal-content {
+            background-color: #2c3e50;
+            margin: auto;
+            padding: 18px; /* Padding reducido */
+            border: 3px solid #f1c40f; /* Borde más delgado */
+            border-radius: 10px; /* Radio de borde más pequeño */
+            width: 95%;
+            max-width: 400px; /* Ancho máximo reducido */
+            box-shadow: 0 6px 12px rgba(0,0,0,0.7);
+            position: relative;
+            animation: slideIn 0.3s ease-out;
+            max-height: 95dvh;
+            overflow-y: auto;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .close-button {
+            color: #aaa;
+            position: absolute;
+            top: 4px;
+            right: 12px;
+            font-size: 28px; /* Tamaño más pequeño */
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .close-button:hover,
+        .close-button:focus {
+            color: #e74c3c;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        
+        .modal-content h2 {
+            color: #f1c40f;
+            font-size: clamp(1em, 3.5vw, 1.6em); /* Fuente más pequeña */
+            margin-bottom: 12px; /* Margen reducido */
+        }
+
+        ul#high-scores-list {
+            list-style-type: none;
+            padding-left: 0;
+            font-size: clamp(0.8em, 2.5vw, 1.1em); /* Fuente más pequeña */
+            margin-bottom: 0;
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 6px;
+            border-radius: 5px;
+            border: 1px dashed #f1c40f;
+            text-align: left;
+        }
+
+        ul#high-scores-list li {
+            margin: 5px 0;
+            color: #ecf0f1;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
+            padding-bottom: 2px;
+            border-bottom: 1px dotted rgba(255,255,255,0.2);
+        }
+
+        ul#high-scores-list li:last-child {
+            border-bottom: none;
         }
 
         #map-pieces-container {
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
-            margin-top: 30px;
-            min-height: 120px;
-            border: 4px dashed #f1c40f;
-            padding: 20px;
-            border-radius: 20px;
+            margin-top: 8px; /* Margen reducido */
+            min-height: 90px; /* Altura mínima ajustada */
+            border: 2px dashed #f1c40f; /* Borde más delgado */
+            padding: 10px; /* Padding reducido */
+            border-radius: 12px;
             background-color: rgba(52, 73, 94, 0.8);
-            gap: 12px; /* Más gap entre las piezas */
+            gap: 8px; /* Gap reducido */
         }
 
         .map-piece {
-            width: clamp(70px, 18vw, 100px); /* Ajustado para tablets */
-            height: clamp(70px, 18vw, 100px); /* Ajustado para tablets */
-            margin: 5px;
+            width: clamp(40px, 13vw, 70px); /* Tamaños más pequeños */
+            height: clamp(40px, 13vw, 70px); /* Tamaños más pequeños */
+            margin: 2px; /* Margen reducido */
             background-color: #7f8c8d;
-            border: 3px solid #34495e;
+            border: 2px solid #34495e;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: clamp(1em, 2.8vw, 1.4em); /* Ajustado para tablets */
+            font-size: clamp(0.8em, 2.2vw, 1.1em); /* Fuente más pequeña */
             color: #ecf0f1;
-            box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5);
-            border-radius: 8px;
+            box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.5);
+            border-radius: 5px;
             transition: background-color 0.5s ease, transform 0.3s ease, border-color 0.5s ease;
         }
 
@@ -253,38 +462,21 @@
             font-weight: bold;
             color: #34495e;
             text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
-            transform: scale(1.1);
+            transform: scale(1.03);
             animation: pieceReveal 0.6s ease-out;
         }
 
         @keyframes pieceReveal {
             0% { transform: scale(0.5) rotateY(90deg); opacity: 0; }
-            70% { transform: scale(1.1) rotateY(-10deg); opacity: 1; }
+            70% { transform: scale(1.03) rotateY(-10deg); opacity: 1; }
             100% { transform: scale(1) rotateY(0deg); }
-        }
-
-        ul#high-scores-list {
-            list-style-type: none;
-            padding-left: 0;
-            font-size: clamp(1em, 3vw, 1.3em); /* Ajustado para tablets */
-            margin-bottom: 20px;
-            background-color: rgba(0, 0, 0, 0.3);
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px dashed #f1c40f;
-        }
-
-        ul#high-scores-list li {
-            margin: 5px 0;
-            color: #ecf0f1;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
         }
 
         @keyframes shake {
             0% { transform: translateX(0); }
-            25% { transform: translateX(-10px); }
-            50% { transform: translateX(10px); }
-            75% { transform: translateX(-10px); }
+            25% { transform: translateX(-6px); }
+            50% { transform: translateX(6px); }
+            75% { transform: translateX(-6px); }
             100% { transform: translateX(0); }
         }
 
@@ -292,44 +484,61 @@
             animation: shake 0.3s ease-in-out 2;
         }
 
-        /* Desktop specific adjustments (min-width: 600px still applies for many tablets in landscape) */
+        /* Media queries para ajustes finos en pantallas más grandes */
         @media (min-width: 600px) {
             #options-container {
-                grid-template-columns: 1fr 1fr; /* Dos columnas en pantallas más grandes */
-                gap: 20px; /* Un poco más de gap en desktop/tablet horizontal */
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+            }
+            .info-button {
+                width: 55px;
+                height: 55px;
+                font-size: 1.7em;
+                bottom: 12px;
+                right: 12px;
+                left: 12px;
+            }
+            .modal-content {
+                padding: 25px;
             }
         }
-        /* Further specific adjustments for larger tablets/smaller desktops */
         @media (min-width: 768px) {
             .game-container {
-                padding: 40px 60px; /* Más padding en contenedores más grandes */
+                padding: 20px 25px;
             }
-            h1 {
-                font-size: clamp(2.5em, 4vw, 3.5em);
+            .game-title {
+                font-size: clamp(1.8em, 3vw, 2.8em);
             }
             #main-timer-button {
-                width: clamp(250px, 35vw, 350px);
-                height: clamp(250px, 35vw, 350px);
+                width: clamp(180px, 28vw, 280px);
+                height: clamp(180px, 28vw, 280px);
             }
             #question {
-                font-size: clamp(2em, 3.5vw, 2.8em);
+                font-size: clamp(1.6em, 2.8vw, 2.3em);
             }
             .option-button {
-                font-size: clamp(1.4em, 2.5vw, 1.8em);
+                font-size: clamp(1.2em, 2vw, 1.6em);
             }
         }
     </style>
 </head>
 <body>
-    <div class="game-container">
+    <div id="splash-screen" class="splash-screen">
         <h1>Misión Matemática</h1>
-        <h2>Puntajes Altos:</h2>
-        <ul id="high-scores-list"></ul>
+        <p>Pulsa para empezar...</p>
+    </div>
 
-        <div>
+    <div id="high-score-splash" class="splash-screen hidden high-score">
+        <h1 id="high-score-message"></h1>
+        <button id="play-again-button">Volver a Jugar</button>
+    </div>
+
+    <div class="game-container" id="game-container">
+        <h1 class="game-title">Misión Matemática</h1> <div class="score-level-bar">
             <span id="score-display">Puntaje: 0</span>
             <span id="current-level-display">Nivel: 1</span>
         </div>
+        
         <p id="message">¡Pulsa el cronómetro para iniciar el acertijo!</p>
         <div class="timer-area">
             <div id="main-timer-button">0s</div>
@@ -339,9 +548,26 @@
             <p id="question">¿Listo para el desafío?</p>
             <div id="options-container"></div>
         </div>
-        <h2>Tu Mapa del Tesoro:</h2>
-        <div id="map-pieces-container">
-            </div>
+    </div>
+
+    <div id="high-scores-toggle" class="info-button">⭐</div>
+
+    <div id="high-scores-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" id="close-high-scores">&times;</span>
+            <h2>Puntajes Altos</h2>
+            <ul id="high-scores-list"></ul>
+        </div>
+    </div>
+
+    <div id="map-toggle" class="info-button">🗺️</div>
+
+    <div id="map-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" id="close-map-modal">&times;</span>
+            <h2>Tu Mapa del Tesoro:</h2>
+            <div id="map-pieces-container"></div>
+        </div>
     </div>
 
     <audio id="correct-sound" src="https://www.soundjay.com/buttons/beep-07a.mp3" preload="auto"></audio>
@@ -366,6 +592,21 @@
         const challengeSound = document.getElementById('challenge-sound');
         const tickSound = document.getElementById('tick-sound');
         const winSound = document.getElementById('win-sound');
+
+        const highScoresToggle = document.getElementById('high-scores-toggle');
+        const highScoresModal = document.getElementById('high-scores-modal');
+        const closeHighScores = document.getElementById('close-high-scores');
+        
+        const mapToggle = document.getElementById('map-toggle');
+        const mapModal = document.getElementById('map-modal');
+        const closeMapModal = document.getElementById('close-map-modal');
+
+        const splashScreen = document.getElementById('splash-screen');
+        const highScoreSplashScreen = document.getElementById('high-score-splash');
+        const highScoreMessage = document.getElementById('high-score-message');
+        const playAgainButton = document.getElementById('play-again-button');
+        const gameContainer = document.getElementById('game-container');
+        const gameTitle = document.querySelector('.game-title'); // Selecciona el título del juego
 
         // Variables de estado del juego
         let highScores = JSON.parse(localStorage.getItem("highScores")) || [];
@@ -433,7 +674,7 @@
                     num1 = getRandomInt(5, 15);
                     num2 = getRandomInt(5, 15);
                     operation = ['+', '-', '*'][getRandomInt(0, 2)];
-                     if (operation === '-' && num1 < num2) [num1, num2] = [num2, num1];
+                    if (operation === '-' && num1 < num2) [num1, num2] = [num2, num1];
                     break;
                 case 3: // Suma y Resta (0-50), Multiplicación (0-10)
                     num1 = getRandomInt(10, 25);
@@ -581,7 +822,7 @@
                 mainTimerButton.textContent = `${timerSeconds}s`;
                 // Solo reproduce el sonido de tick si una pregunta está activa y el jugador está respondiendo
                 if (gameActive && !questionArea.classList.contains('hidden') && timerSeconds % 5 === 0) {
-                     playSound(tickSound);
+                    playSound(tickSound);
                 }
             }, 1000);
 
@@ -624,27 +865,52 @@
             mainTimerButton.classList.remove('hidden'); // Muestra el botón del temporizador
             mainTimerButton.textContent = `${timerSeconds}s`; // Muestra el tiempo final
 
+            let isNewHighScore = false;
+            if (highScores.length < 3 || currentScore > (highScores.length > 0 ? highScores[highScores.length - 1].score : -1)) {
+                isNewHighScore = true;
+            }
+
             if (won) {
                 playSound(winSound);
-                messageElement.textContent = `¡Felicidades! Has completado el mapa en ${timerSeconds} segundos con ${currentScore} puntos.`;
-                updateHighScores(currentScore);
+                messageElement.textContent = `¡Felicidades! Has completado el desafío.`;
+                if (isNewHighScore) {
+                    const playerName = prompt("¡Felicidades, nuevo puntaje alto! Ingresa tu nombre:");
+                    updateHighScores(currentScore, playerName || "Jugador");
+                    showHighScoreSplash(playerName || "Jugador");
+                } else {
+                    updateHighScores(currentScore); // Still update if not a new top score but still a valid score
+                    retryButton.classList.remove("hidden");
+                }
             } else {
                 messageElement.textContent = `¡Tiempo agotado o respuesta incorrecta! Tu puntaje final: ${currentScore}.`;
-                updateHighScores(currentScore); // Actualiza el puntaje aunque se pierda
+                if (isNewHighScore) { // Even if lost, if it's a new high score, prompt for name
+                    const playerName = prompt("¡Lograste un puntaje alto! Ingresa tu nombre:");
+                    updateHighScores(currentScore, playerName || "Jugador");
+                    showHighScoreSplash(playerName || "Jugador");
+                } else {
+                    updateHighScores(currentScore); // Still update if not a new top score but still a valid score
+                    retryButton.classList.remove("hidden"); // Muestra el botón de reintentar
+                }
             }
-            retryButton.classList.remove("hidden"); // Muestra el botón de reintentar
         }
 
         /**
          * Actualiza la lista de puntajes altos guardados en localStorage.
          * @param {number} score - El puntaje obtenido en la partida actual.
+         * @param {string} playerName - El nombre del jugador para el puntaje alto.
+         * @returns {boolean} - Verdadero si es un nuevo puntaje alto, falso en caso contrario.
          */
-        function updateHighScores(score) {
-            highScores.push(score);
-            highScores.sort((a, b) => b - a); // Ordena de mayor a menor
-            highScores = highScores.slice(0, 3); // Mantiene solo los 3 mejores
-            localStorage.setItem("highScores", JSON.stringify(highScores));
-            updateHighScoresDisplay(); // Actualiza la visualización de los puntajes
+        function updateHighScores(score, playerName = "Anónimo") {
+            // Check if highScores is empty or has less than 3 entries, or if current score is higher than the lowest high score
+            if (highScores.length < 3 || score > highScores[highScores.length - 1].score) {
+                highScores.push({ score: score, name: playerName });
+                highScores.sort((a, b) => b.score - a.score);
+                highScores = highScores.slice(0, 3);
+                localStorage.setItem("highScores", JSON.stringify(highScores));
+                updateHighScoresDisplay();
+                return true; // It was a high score
+            }
+            return false; // It was not a high score
         }
 
         /**
@@ -652,9 +918,28 @@
          */
         function updateHighScoresDisplay() {
             const highScoresList = document.getElementById("high-scores-list");
-            highScoresList.innerHTML = highScores.map((score, i) =>
-                `<li>${i + 1}. ${score} puntos</li>`
-            ).join("");
+            let displayHtml = '';
+            for (let i = 0; i < 3; i++) {
+                if (highScores[i]) {
+                    displayHtml += `<li>${i + 1}. ${highScores[i].name}: ${highScores[i].score} puntos</li>`;
+                } else {
+                    displayHtml += `<li>${i + 1}. Pendiente</li>`; // Display "Pendiente" for empty slots
+                }
+            }
+            highScoresList.innerHTML = displayHtml;
+        }
+
+        /**
+         * Muestra la pantalla de felicitación por un puntaje alto.
+         * @param {string} playerName - El nombre del jugador.
+         */
+        function showHighScoreSplash(playerName) {
+            gameContainer.classList.remove('show');
+            gameContainer.classList.add('hidden');
+            highScoreSplashScreen.classList.remove('hidden');
+            highScoreSplashScreen.classList.add('show');
+            highScoreMessage.textContent = `¡Felicidades, ${playerName}! Jason Dafnis te felicita por esta hazaña.`;
+            playSound(winSound); // Reproducir sonido de victoria para el high score
         }
 
         /**
@@ -684,12 +969,35 @@
                 mapPiecesContainer.appendChild(piece);
             }
             updateHighScoresDisplay(); // Actualiza la visualización de los puntajes al reiniciar
+            highScoreSplashScreen.classList.add('hidden'); // Asegura que el splash de high score esté oculto
+            gameContainer.classList.remove('hidden'); // Asegura que el contenedor del juego esté visible
+            gameContainer.classList.add('show'); // Asegura que el contenedor del juego esté visible
         }
 
         // --- Event Listeners y Configuración Inicial ---
 
         // Se ejecuta cuando el DOM está completamente cargado
         document.addEventListener('DOMContentLoaded', () => {
+            // Muestra el splash screen al cargar
+            splashScreen.style.display = 'flex';
+
+            // Oculta el splash screen después de 3 segundos o al hacer clic
+            const hideSplashScreen = () => {
+                splashScreen.classList.add('fadeOut');
+                gameContainer.classList.add('show'); // Muestra el contenedor del juego
+                setTimeout(() => {
+                    splashScreen.style.display = 'none';
+                    gameTitle.classList.add('hidden'); // Oculta el título del juego principal
+                }, 500); // Coincide con la duración de la animación fadeOut
+            };
+
+            // Ocultar splash screen después de 3 segundos
+            setTimeout(hideSplashScreen, 3000); 
+
+            // Ocultar splash screen al hacer clic/tocar en cualquier parte
+            splashScreen.addEventListener('click', hideSplashScreen);
+            splashScreen.addEventListener('touchstart', hideSplashScreen); // Para dispositivos táctiles
+
             resetGame(); // Establece el juego en su estado inicial
         });
 
@@ -704,6 +1012,38 @@
         // Manejador de clic para el botón de reintentar
         retryButton.addEventListener("click", () => {
             resetGame(); // Reinicia el juego
+        });
+
+        // Manejador de clic para el botón "Volver a Jugar" en el splash de puntaje alto
+        playAgainButton.addEventListener("click", () => {
+            resetGame(); // Reinicia el juego
+        });
+
+        // Manejo de modales
+        highScoresToggle.addEventListener('click', () => {
+            highScoresModal.style.display = 'flex';
+        });
+
+        closeHighScores.addEventListener('click', () => {
+            highScoresModal.style.display = 'none';
+        });
+
+        mapToggle.addEventListener('click', () => {
+            mapModal.style.display = 'flex';
+        });
+
+        closeMapModal.addEventListener('click', () => {
+            mapModal.style.display = 'none';
+        });
+
+        // Cerrar modales al hacer clic fuera de ellos
+        window.addEventListener('click', (event) => {
+            if (event.target == highScoresModal) {
+                highScoresModal.style.display = 'none';
+            }
+            if (event.target == mapModal) {
+                mapModal.style.display = 'none';
+            }
         });
     </script>
 </body>
