@@ -1,0 +1,1501 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Misión Matemática</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        /* Base para Modo Oscuro y Centrado */
+        body {
+            font-family: 'Press Start 2P', cursive, sans-serif;
+            background-color: #2c3e50;
+            background-image: url('https://via.placeholder.com/1920x1080/1a2a3a/FFFFFF?text=Espacio+Estrellado'); /* Fondo placeholder */
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100dvh; /* Usa 100dvh para ocupar toda la altura del viewport */
+            margin: 0;
+            color: #ecf0f1;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+            padding: 5px; /* Reducido el padding general */
+            box-sizing: border-box;
+            overflow: hidden; /* ¡Crucial para evitar el scroll! */
+            position: relative; /* Para posicionar elementos fijos */
+        }
+
+        /* --- Splash Screen --- */
+        .splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #1a2a3a;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+            color: #f1c40f;
+            text-align: center;
+            opacity: 0;
+            animation: fadeIn 1s ease-out forwards;
+        }
+        
+        .splash-screen.high-score {
+            background-color: #0d1a26; /* Un color diferente para el splash de high score */
+            color: #2ecc71; /* Color de texto diferente */
+        }
+
+        .splash-screen h1 {
+            font-size: clamp(1.2em, 4.5vw, 2.0em); /* Ajustado para ser similar al tamaño del párrafo */
+            margin-bottom: 20px;
+            text-shadow: 4px 4px 10px rgba(0, 0, 0, 0.8);
+            color: #f1c40f;
+            letter-spacing: 2px;
+        }
+        
+        .splash-screen.high-score h1 {
+            color: #2ecc71; /* Color de texto diferente para el h1 del high score splash */
+        }
+
+        .splash-screen p {
+            font-size: clamp(0.7em, 2.5vw, 1.2em); /* Reduced font size for intro text */
+            color: #ecf0f1;
+            animation: pulse 1.5s infinite alternate; /* Animación de "pulsación" */
+        }
+        
+        .splash-screen.high-score p {
+             color: #3498db;
+             animation: none; /* No animar el texto en el high score splash */
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; display: none; } /* Oculta completamente al final */
+        }
+
+        @keyframes pulse {
+            from { transform: scale(1); opacity: 1; }
+            to { transform: scale(1.05); opacity: 0.8; }
+        }
+
+        /* --- Game Container --- */
+        .game-container {
+            background-color: rgba(44, 62, 80, 0.95);
+            padding: 10px 15px; /* Más compacto */
+            border-radius: 15px; /* Borde más pequeño */
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.6); /* Sombra ajustada */
+            text-align: center;
+            max-width: 600px; /* Ancho máximo ajustado */
+            width: 98%; /* Ocupa casi todo el ancho */
+            border: 4px solid #34495e; /* Borde más delgado */
+            position: relative;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between; /* Distribuye el espacio entre elementos */
+            flex-grow: 1; /* Permite que ocupe el espacio disponible */
+            min-height: calc(100dvh - 10px); /* Ajusta la altura mínima para que encaje */
+            opacity: 0; /* Oculto inicialmente */
+            transition: opacity 0.5s ease-in;
+        }
+        
+        .game-container.show {
+            opacity: 1;
+        }
+
+        /* Título del juego principal (se ocultará después del splash) */
+        .game-title {
+            color: #f1c40f;
+            font-size: clamp(1.4em, 4vw, 2.5em); /* Ligeramente más pequeño, ya que no es el foco principal */
+            margin-bottom: 5px; /* Margen muy reducido */
+            text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.7);
+            letter-spacing: 1px;
+            line-height: 1.1;
+            /* Se ocultará con JavaScript */
+            display: none; 
+        }
+        
+        .score-level-bar {
+            display: flex;
+            flex-direction: column; /* Changed to column to stack items */
+            align-items: center;   /* Center items horizontally within the column */
+            width: 100%;
+            max-width: 400px; /* Ancho máximo para la barra */
+            margin-bottom: 10px; /* Margen reducido */
+            padding-top: 5px; /* Pequeño padding superior para compensar el título oculto */
+        }
+
+        #score-display, #current-level-display {
+            font-size: clamp(1em, 3.2vw, 1.6em); /* Fuente más pequeña */
+            font-weight: bold;
+            border: 2px solid;
+            padding: 5px 8px; /* Padding reducido */
+            border-radius: 6px;
+            background-color: #2c3e50;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+            white-space: nowrap; /* Evita que el texto se rompa */
+            width: 100%; /* Take full width of parent column */
+            box-sizing: border-box; /* Include padding and border in the width */
+            text-align: center !important; /* Center text for both when stacked */
+        }
+        
+        #score-display {
+            color: #3498db;
+            border-color: #3498db;
+            margin-bottom: 8px; /* Add vertical spacing below score */
+        }
+
+        #current-level-display {
+            color: #2ecc71;
+            border-color: #2ecc71;
+        }
+
+        #message {
+            font-size: clamp(0.8em, 3vw, 1.4em); /* Fuente más pequeña */
+            margin-bottom: 10px; /* Margen reducido */
+            min-height: 1.5em; /* Altura mínima ajustada */
+            font-weight: bold;
+            color: #ecf0f1;
+            padding: 5px 8px; /* Padding reducido */
+            border-radius: 5px;
+            background-color: rgba(0, 0, 0, 0.2);
+            width: 100%;
+            box-sizing: border-box;
+            word-wrap: break-word;
+        }
+
+        .timer-area {
+            margin: 10px 0; /* Margen reducido */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex-grow: 0;
+        }
+
+        #main-timer-button {
+            font-family: 'Press Start 2P', cursive, sans-serif;
+            font-size: clamp(1.2em, 5vw, 2.5em); /* Fuente más pequeña para "PULSA" */
+            font-weight: bold;
+            color: #ecf0f1; /* Changed from #f1c40f (yellow) */
+            background-color: #34495e;
+            border: 5px solid #ecf0f1; /* Changed from #f1c40f (yellow) */
+            border-radius: 50%;
+            width: clamp(140px, 38vw, 220px); /* Tamaños más pequeños */
+            height: clamp(140px, 38vw, 220px); /* Tamaños más pequeños */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.6); /* Sombra ajustada */
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+        }
+
+        /* REMOVED: #main-timer-button.active-timer as it no longer displays time */
+
+        #main-timer-button:hover {
+            background-color: #4a6480;
+            border-color: #3498db; /* Changed from #ffd700 (yellow) */
+            transform: scale(1.03);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.7);
+        }
+
+        #main-timer-button:active {
+            transform: scale(0.96);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+        }
+
+        #retry-button, #play-again-button {
+            font-family: 'Press Start 2P', cursive, sans-serif;
+            font-size: clamp(0.9em, 3vw, 1.3em); /* Fuente más pequeña */
+            padding: 10px 20px; /* Padding reducido */
+            background-color: #e67e22;
+            color: white;
+            border: none;
+            border-radius: 8px; /* Radio de borde más pequeño */
+            cursor: pointer;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            margin-top: 10px; /* Margen reducido */
+        }
+
+        #retry-button:hover, #play-again-button:hover {
+            background-color: #d35400;
+            transform: translateY(-1px);
+        }
+        #retry-button:active, #play-again-button:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .question-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 10px; /* Margen reducido */
+            animation: slideInUp 0.5s ease-out;
+            width: 100%;
+            flex-grow: 1; /* Permite que ocupe el espacio disponible */
+            justify-content: center; /* Centra verticalmente si hay espacio */
+        }
+
+        @keyframes slideInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        #question {
+            font-size: clamp(1.2em, 4vw, 2em); /* Fuente más pequeña */
+            margin-bottom: 15px; /* Margen reducido */
+            color: #f1c40f;
+            min-height: 1.8em; /* Altura mínima ajustada */
+            background-color: rgba(52, 73, 94, 0.7);
+            padding: 6px 10px; /* Padding reducido */
+            border-radius: 6px;
+            border: 2px solid #f1c40f;
+            max-width: 95%;
+            box-sizing: border-box;
+            word-wrap: break-word;
+        }
+
+        #options-container {
+            display: grid;
+            grid-template-columns: 1fr; /* Una columna por defecto para móviles */
+            gap: 10px; /* Gap reducido */
+            width: 100%;
+            max-width: 350px; /* Ancho máximo ajustado */
+            margin-bottom: 10px; /* Margen reducido */
+        }
+
+        .option-button {
+            background-color: #3498db;
+            color: white;
+            padding: 12px 18px; /* Padding reducido */
+            font-size: clamp(1em, 3.5vw, 1.4em); /* Fuente más pequeña */
+            border: 2px solid #2980b9;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.15s ease, box-shadow 0.2s ease;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            font-family: 'Press Start 2P', cursive, sans-serif;
+        }
+
+        .option-button:hover {
+            background-color: #2980b9;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+        }
+
+        .option-button:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+            background-color: #2471a3;
+        }
+
+        /* Cronómetro por pregunta */
+        #question-chronometer {
+            font-family: 'Press Start 2P', cursive, sans-serif;
+            font-size: clamp(1em, 3.5vw, 1.5em);
+            color: #e74c3c; /* Rojo que combina con la temática */
+            margin-top: 15px; /* Margen para separarlo de las opciones */
+            padding: 5px 10px;
+            border: 2px solid #e74c3c;
+            border-radius: 5px;
+            background-color: rgba(0, 0, 0, 0.3);
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+            letter-spacing: 1px;
+        }
+
+        /* Botones flotantes de información */
+        .info-button {
+            position: fixed;
+            bottom: 8px; /* Ajustado más abajo y cerca del borde */
+            width: 45px; /* Tamaño más pequeño */
+            height: 45px; /* Tamaño más pequeño */
+            border-radius: 50%;
+            background-color: #f1c40f;
+            color: #2c3e50;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Press Start +2P', cursive, sans-serif;
+            font-size: 1.5em; /* Fuente más pequeña */
+            cursor: pointer;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.5);
+            transition: transform 0.2s ease, background-color 0.3s ease;
+            z-index: 100;
+        }
+
+        .info-button:hover {
+            transform: scale(1.06);
+            background-color: #e67e22;
+        }
+
+        #high-scores-toggle {
+            right: 8px; /* Ajustado más cerca del borde */
+        }
+
+        #map-toggle {
+            left: 8px; /* Ajustado más cerca del borde */
+        }
+
+        /* Modal de información */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 101;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.85);
+            justify-content: center;
+            align-items: center;
+            padding: 8px; /* Padding reducido */
+            box-sizing: border-box;
+        }
+
+        .modal-content {
+            background-color: #2c3e50;
+            margin: auto;
+            padding: 18px; /* Padding reducido */
+            border: 3px solid #f1c40f; /* Borde más delgado */
+            border-radius: 10px; /* Radio de borde más pequeño */
+            width: 95%;
+            max-width: 400px; /* Ancho máximo reducido */
+            box-shadow: 0 6px 12px rgba(0,0,0,0.7);
+            position: relative;
+            animation: slideIn 0.3s ease-out;
+            max-height: 95dvh;
+            overflow-y: auto;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .close-button {
+            color: #aaa;
+            position: absolute;
+            top: 4px;
+            right: 12px;
+            font-size: 28px; /* Tamaño más pequeño */
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .close-button:hover,
+        .close-button:focus {
+            color: #e74c3c;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        
+        .modal-content h2 {
+            color: #f1c40f;
+            font-size: clamp(1em, 3.5vw, 1.6em); /* Fuente más pequeña */
+            margin-bottom: 12px; /* Margen reducido */
+        }
+
+        ul#high-scores-list {
+            list-style-type: none;
+            padding-left: 0;
+            font-size: clamp(0.8em, 2.5vw, 1.1em); /* Fuente más pequeña */
+            margin-bottom: 0;
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 6px;
+            border-radius: 5px;
+            border: 1px dashed #f1c40f;
+            text-align: left;
+        }
+
+        ul#high-scores-list li {
+            margin: 5px 0;
+            color: #ecf0f1;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
+            padding-bottom: 2px;
+            border-bottom: 1px dotted rgba(255,255,255,0.2);
+        }
+
+        ul#high-scores-list li:last-child {
+            border-bottom: none;
+        }
+
+        #map-pieces-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 8px; /* Margen reducido */
+            min-height: 90px; /* Altura mínima ajustada */
+            border: 2px dashed #f1c40f; /* Borde más delgado */
+            padding: 10px; /* Padding reducido */
+            border-radius: 12px;
+            background-color: rgba(52, 73, 94, 0.8);
+            gap: 8px; /* Gap reducido */
+            max-height: 250px; /* Allow scroll if many pieces */
+            overflow-y: auto;
+        }
+
+        .map-piece {
+            width: clamp(40px, 13vw, 70px); /* Tamaños más pequeños */
+            height: clamp(40px, 13vw, 70px); /* Tamaños más pequeños */
+            margin: 2px; /* Margen reducido */
+            background-color: #7f8c8d;
+            border: 2px solid #34495e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: clamp(0.8em, 2.2vw, 1.1em); /* Fuente más pequeña */
+            color: #ecf0f1;
+            box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.5);
+            border-radius: 5px;
+            transition: background-color 0.5s ease, transform 0.3s ease, border-color 0.5s ease;
+        }
+
+        .map-piece.revealed {
+            background-color: #f1c40f;
+            border-color: #e67e22;
+            font-weight: bold;
+            color: #34495e;
+            text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
+            transform: scale(1.03);
+            animation: pieceReveal 0.6s ease-out;
+        }
+
+        @keyframes pieceReveal {
+            0% { transform: scale(0.5) rotateY(90deg); opacity: 0; }
+            70% { transform: scale(1.03) rotateY(-10deg); opacity: 1; }
+            100% { transform: scale(1) rotateY(0deg); }
+        }
+
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            50% { transform: translateX(6px); }
+            75% { transform: translateX(-6px); }
+            100% { transform: translateX(0); }
+        }
+
+        .shake {
+            animation: shake 0.3s ease-in-out 2;
+        }
+
+        /* Media queries para ajustes finos en pantallas más grandes */
+        @media (min-width: 600px) {
+            #options-container {
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+            }
+            .info-button {
+                width: 55px;
+                height: 55px;
+                font-size: 1.7em;
+                bottom: 12px;
+                right: 12px;
+                left: 12px;
+            }
+            .modal-content {
+                padding: 25px;
+            }
+        }
+        @media (min-width: 768px) {
+            .game-container {
+                padding: 20px 25px;
+            }
+            .game-title {
+                font-size: clamp(1.8em, 3vw, 2.8em);
+            }
+            #main-timer-button {
+                width: clamp(180px, 28vw, 280px);
+                height: clamp(180px, 28vw, 280px);
+            }
+            #question {
+                font-size: clamp(1.6em, 2.8vw, 2.3em);
+            }
+            .option-button {
+                font-size: clamp(1.2em, 2vw, 1.6em);
+            }
+        }
+
+        /* --- Nickname Input Modal Styles --- */
+        #nickname-input-modal .modal-content {
+            max-width: 500px;
+            padding: 25px;
+            text-align: center;
+        }
+
+        #nickname-input-modal h2 {
+            font-size: clamp(1.1em, 4vw, 1.8em);
+            margin-bottom: 20px;
+            color: #2ecc71; /* Greenish color for success/input */
+        }
+
+        #nickname-input-field {
+            font-family: 'Press Start 2P', cursive, sans-serif;
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 20px;
+            font-size: clamp(1em, 3.5vw, 1.5em);
+            text-align: center;
+            background-color: #34495e;
+            color: #ecf0f1;
+            border: 3px solid #f1c40f;
+            border-radius: 8px;
+            box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.5);
+            text-transform: uppercase; /* To make nickname uppercase by default */
+        }
+
+        .keyboard-layout {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr); /* 10 columns for QWERTY-like layout */
+            gap: 6px; /* Smaller gap */
+            margin-bottom: 20px;
+        }
+
+        .keyboard-button {
+            font-family: 'Press Start 2P', cursive, sans-serif;
+            background-color: #3498db;
+            color: white;
+            padding: 10px 0; /* Adjusted padding */
+            font-size: clamp(0.7em, 2.5vw, 1em); /* Smaller font size for keys */
+            border: 2px solid #2980b9;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            user-select: none; /* Prevent text selection */
+            -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
+            text-transform: uppercase;
+        }
+        
+        .keyboard-button.wide {
+            grid-column: span 2; /* Make some buttons wider */
+        }
+
+        .keyboard-button.extra-wide {
+            grid-column: span 3; /* Make some buttons even wider */
+        }
+
+        .keyboard-button:hover {
+            background-color: #2980b9;
+            transform: translateY(-1px);
+        }
+
+        .keyboard-button:active {
+            background-color: #2471a3;
+            transform: translateY(0);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+
+        .control-buttons {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+        }
+
+        .control-buttons button {
+            font-family: 'Press Start 2P', cursive, sans-serif;
+            font-size: clamp(0.8em, 3vw, 1.2em);
+            padding: 12px 25px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        #confirm-nickname-button {
+            background-color: #2ecc71;
+            color: white;
+        }
+
+        #confirm-nickname-button:hover {
+            background-color: #27ae60;
+        }
+
+        #cancel-nickname-button {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        #cancel-nickname-button:hover {
+            background-color: #c0392b;
+        }
+    </style>
+</head>
+<body>
+    <div id="splash-screen" class="splash-screen">
+        <h1>Misión Matemática</h1>
+        <p>Pulsa para empezar...</p>
+    </div>
+
+    <div id="high-score-splash" class="splash-screen hidden high-score">
+        <h1 id="high-score-message"></h1>
+        <button id="play-again-button">Volver a Jugar</button>
+    </div>
+
+    <div class="game-container" id="game-container">
+        <h1 class="game-title">Misión Matemática</h1> 
+        <div class="score-level-bar">
+            <span id="score-display">Puntaje: 0</span>
+            <span id="current-level-display">Nivel: 1</span>
+        </div>
+        
+        <p id="message">¡Pulsa el cronómetro para iniciar el acertijo!</p>
+        <div class="timer-area">
+            <div id="main-timer-button">PULSA</div>
+            <button id="retry-button" class="hidden">Volver a intentar</button>
+        </div>
+        <div class="question-area hidden">
+            <p id="question">¿Listo para el desafío?</p>
+            <div id="options-container"></div>
+            <div id="question-chronometer">00:00:00</div>
+        </div>
+    </div>
+
+    <div id="high-scores-toggle" class="info-button">⭐</div>
+
+    <div id="high-scores-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" id="close-high-scores">&times;</span>
+            <h2>Puntajes Altos</h2>
+            <ul id="high-scores-list"></ul>
+        </div>
+    </div>
+
+    <div id="map-toggle" class="info-button">🗺️</div>
+
+    <div id="map-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" id="close-map-modal">&times;</span>
+            <h2>Tu Mapa del Tesoro:</h2>
+            <div id="map-pieces-container"></div>
+        </div>
+    </div>
+
+    <div id="nickname-input-modal" class="modal">
+        <div class="modal-content">
+            <h2>¡Nuevo Puntaje Alto!</h2>
+            <p>Ingresa tu Nickname (max 10 caracteres):</p>
+            <input type="text" id="nickname-input-field" maxlength="10" placeholder="NOMBRE" readonly>
+            <div class="keyboard-layout">
+                <button class="keyboard-button">Q</button>
+                <button class="keyboard-button">W</button>
+                <button class="keyboard-button">E</button>
+                <button class="keyboard-button">R</button>
+                <button class="keyboard-button">T</button>
+                <button class="keyboard-button">Y</button>
+                <button class="keyboard-button">U</button>
+                <button class="keyboard-button">I</button>
+                <button class="keyboard-button">O</button>
+                <button class="keyboard-button">P</button>
+                <button class="keyboard-button">A</button>
+                <button class="keyboard-button">S</button>
+                <button class="keyboard-button">D</button>
+                <button class="keyboard-button">F</button>
+                <button class="keyboard-button">G</button>
+                <button class="keyboard-button">H</button>
+                <button class="keyboard-button">J</button>
+                <button class="keyboard-button">K</button>
+                <button class="keyboard-button">L</button>
+                <button class="keyboard-button wide" data-key="borrar">BORRAR</button>
+                <button class="keyboard-button">Z</button>
+                <button class="keyboard-button">X</button>
+                <button class="keyboard-button">C</button>
+                <button class="keyboard-button">V</button>
+                <button class="keyboard-button">B</button>
+                <button class="keyboard-button">N</button>
+                <button class="keyboard-button">M</button>
+                <button class="keyboard-button">0</button>
+                <button class="keyboard-button">1</button>
+                <button class="keyboard-button">2</button>
+                <button class="keyboard-button">3</button>
+                <button class="keyboard-button">4</button>
+                <button class="keyboard-button">5</button>
+                <button class="keyboard-button">6</button>
+                <button class="keyboard-button">7</button>
+                <button class="keyboard-button">8</button>
+                <button class="keyboard-button">9</button>
+                <button class="keyboard-button extra-wide" data-key="espacio">ESPACIO</button>
+            </div>
+            <div class="control-buttons">
+                <button id="cancel-nickname-button">Cancelar</button>
+                <button id="confirm-nickname-button">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <audio id="correct-sound" src="https://www.soundjay.com/buttons/beep-07a.mp3" preload="auto"></audio>
+    <audio id="wrong-sound" src="https://www.soundjay.com/buttons/beep-06.mp3" preload="auto"></audio>
+    <audio id="challenge-sound" src="https://www.soundjay.com/buttons/button-20.mp3" preload="auto"></audio>
+    <audio id="tick-sound" src="https://www.soundjay.com/mechanical/sounds/clock-ticking-2.mp3" preload="auto"></audio>
+    <audio id="win-sound" src="https://www.soundjay.com/buttons/button-3.mp3" preload="auto"></audio>
+
+    <script>
+        // Obtención de elementos del DOM
+        const mainTimerButton = document.getElementById('main-timer-button');
+        const retryButton = document.getElementById('retry-button');
+        const questionElement = document.getElementById('question');
+        const optionsContainer = document.getElementById('options-container');
+        const questionArea = document.querySelector('.question-area');
+        const messageElement = document.getElementById('message');
+        const mapPiecesContainer = document.getElementById('map-pieces-container');
+        const scoreDisplay = document.getElementById('score-display');
+        const currentLevelDisplay = document.getElementById('current-level-display');
+        const correctSound = document.getElementById('correct-sound');
+        const wrongSound = document.getElementById('wrong-sound');
+        const challengeSound = document.getElementById('challenge-sound');
+        const tickSound = document.getElementById('tick-sound');
+        const winSound = document.getElementById('win-sound');
+
+        const highScoresToggle = document.getElementById('high-scores-toggle');
+        const highScoresModal = document.getElementById('high-scores-modal');
+        const closeHighScores = document.getElementById('close-high-scores');
+        
+        const mapToggle = document.getElementById('map-toggle');
+        const mapModal = document.getElementById('map-modal');
+        const closeMapModal = document.getElementById('close-map-modal');
+
+        const splashScreen = document.getElementById('splash-screen');
+        const highScoreSplashScreen = document.getElementById('high-score-splash');
+        const highScoreMessage = document.getElementById('high-score-message');
+        const playAgainButton = document.getElementById('play-again-button');
+        const gameContainer = document.getElementById('game-container');
+        const gameTitle = document.querySelector('.game-title'); // Selecciona el título del juego
+
+        // Nickname Input Modal Elements
+        const nicknameInputModal = document.getElementById('nickname-input-modal');
+        const nicknameInputField = document.getElementById('nickname-input-field');
+        const keyboardContainer = document.querySelector('.keyboard-layout');
+        const confirmNicknameButton = document.getElementById('confirm-nickname-button');
+        const cancelNicknameButton = document.getElementById('cancel-nickname-button');
+
+        // Nuevo elemento para el cronómetro por pregunta
+        const questionChronometer = document.getElementById('question-chronometer');
+
+        // Variables de estado del juego
+        let highScores = JSON.parse(localStorage.getItem("highScores")) || [];
+        let currentQuestion = {};
+        let mapPiecesFound = 0;
+        const totalMapPieces = 30; // ¡Cambiado a 30 para 30 niveles!
+        let timerSeconds = 0; // Tiempo total de la partida (se sigue registrando para puntajes altos, pero no se muestra en mainTimerButton)
+        let timerInterval; // Intervalo para el tiempo total de la partida
+        let questionCurrentSeconds = 0; // Nuevo: tiempo para la pregunta actual
+        let questionTimerInterval; // Nuevo: intervalo para el tiempo de la pregunta actual
+        let currentScore = 0;
+        let currentLevel = 1;
+        let gameActive = false; // Bandera para controlar si el juego está activo
+        let pendingHighScoreDetails = null; // Stores score and time when a new high score is pending nickname input
+
+        // --- Funciones Auxiliares ---
+
+        /**
+         * Formatea segundos en HH:MM:SS. Limite a 99 horas.
+         * @param {number} totalSeconds - El número total de segundos.
+         * @returns {string} El tiempo formateado.
+         */
+        function formatTime(totalSeconds) {
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+
+            const displayHours = String(hours).padStart(2, '0');
+            const displayMinutes = String(minutes).padStart(2, '0');
+            const displaySeconds = String(seconds).padStart(2, '0');
+
+            return `${displayHours}:${displayMinutes}:${displaySeconds}`;
+        }
+
+        /**
+         * Genera un número entero aleatorio entre min y max (inclusive).
+         * @param {number} min - El valor mínimo.
+         * @param {number} max - El valor máximo.
+         * @returns {number} Un número entero aleatorio.
+         */
+        function getRandomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        /**
+         * Mezcla aleatoriamente los elementos de un array (algoritmo de Fisher-Yates).
+         * @param {Array} array - El array a mezclar.
+         * @returns {Array} El array mezclado.
+         */
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        /**
+         * Reproduce un sonido de audio.
+         * @param {HTMLAudioElement} audioElement - El elemento de audio a reproducir.
+         */
+        function playSound(audioElement) {
+            audioElement.currentTime = 0; // Reinicia el audio para que siempre se reproduzca desde el inicio
+            audioElement.play().catch(e => console.error("Error al reproducir el sonido:", e));
+        }
+
+        // --- Funciones de Lógica del Juego ---
+
+        /**
+         * Genera una nueva pregunta matemática basada en el nivel actual.
+         */
+        function generateQuestion() {
+            let num1, num2, operation, answer, options = [];
+
+            // Reinicia el cronómetro de la pregunta
+            clearInterval(questionTimerInterval);
+            questionCurrentSeconds = 0;
+            questionChronometer.textContent = formatTime(questionCurrentSeconds); // Muestra 00:00:00
+            questionTimerInterval = setInterval(() => {
+                questionCurrentSeconds++;
+                questionChronometer.textContent = formatTime(questionCurrentSeconds);
+            }, 1000);
+
+            // Lógica de dificultad basada en el nivel
+            switch (currentLevel) {
+                case 1: // Suma y Resta básica (0-10)
+                    num1 = getRandomInt(1, 10);
+                    num2 = getRandomInt(1, 10);
+                    operation = Math.random() < 0.5 ? '+' : '-';
+                    if (operation === '-' && num1 < num2) [num1, num2] = [num2, num1];
+                    break;
+                case 2: // Suma y Resta (0-20), Multiplicación simple
+                    num1 = getRandomInt(5, 15);
+                    num2 = getRandomInt(5, 15);
+                    operation = ['+', '-', '*'][getRandomInt(0, 2)];
+                    if (operation === '-' && num1 < num2) [num1, num2] = [num2, num1];
+                    break;
+                case 3: // Suma y Resta (0-50), Multiplicación (0-10)
+                    num1 = getRandomInt(10, 25);
+                    num2 = getRandomInt(1, 10);
+                    operation = ['+', '-', '*'][getRandomInt(0, 2)];
+                    if (operation === '-' && num1 < num2) [num1, num2] = [num2, num1];
+                    break;
+                case 4: // Operaciones más complejas, introduce división
+                    num1 = getRandomInt(15, 30);
+                    num2 = getRandomInt(2, 10);
+                    operation = ['+', '-', '*', '/'][getRandomInt(0, 3)];
+                    if (operation === '/') {
+                        num1 = num2 * getRandomInt(2, 8); // Asegura que la división sea un número entero
+                    } else if (operation === '-' && num1 < num2) {
+                        [num1, num2] = [num2, num1];
+                    }
+                    break;
+                case 5:
+                case 6: // Niveles 5-6: Aumenta rangos para todas las operaciones
+                    num1 = getRandomInt(20, 40);
+                    num2 = getRandomInt(3, 12);
+                    operation = ['+', '-', '*', '/'][getRandomInt(0, 3)];
+                    if (operation === '/') {
+                        num1 = num2 * getRandomInt(2, 10);
+                    } else if (operation === '-' && num1 < num2) {
+                        [num1, num2] = [num2, num1];
+                    }
+                    break;
+                case 7:
+                case 8: // Niveles 7-8: Rangos aún mayores
+                    num1 = getRandomInt(30, 60);
+                    num2 = getRandomInt(4, 15);
+                    operation = ['+', '-', '*', '/'][getRandomInt(0, 3)];
+                    if (operation === '/') {
+                        num1 = num2 * getRandomInt(3, 12);
+                    } else if (operation === '-' && num1 < num2) {
+                        [num1, num2] = [num2, num1];
+                    }
+                    break;
+                case 9:
+                case 10: // Niveles 9-10 (Zona de puntaje alto): Multiplicaciones más grandes, divisiones más complejas
+                    num1 = getRandomInt(40, 80);
+                    num2 = getRandomInt(5, 20);
+                    operation = ['+', '-', '*', '/'][getRandomInt(0, 3)];
+                    if (operation === '/') {
+                        num1 = num2 * getRandomInt(4, 15);
+                    } else if (operation === '-' && num1 < num2) {
+                        [num1, num2] = [num2, num1];
+                    }
+                    break;
+                case 11:
+                case 12: // Niveles 11-12: Números hasta 100
+                    num1 = getRandomInt(50, 100);
+                    num2 = getRandomInt(5, 25);
+                    operation = ['+', '-', '*', '/'][getRandomInt(0, 3)];
+                    if (operation === '/') {
+                        num1 = num2 * getRandomInt(5, 20);
+                    } else if (operation === '-' && num1 < num2) {
+                        [num1, num2] = [num2, num1];
+                    }
+                    break;
+                case 13:
+                case 14: // Niveles 13-14: Multiplicaciones más grandes, divisiones con divisores más grandes
+                    num1 = getRandomInt(70, 120);
+                    num2 = getRandomInt(7, 30);
+                    operation = ['+', '-', '*', '/'][getRandomInt(0, 3)];
+                    if (operation === '/') {
+                        num1 = num2 * getRandomInt(6, 25);
+                    } else if (operation === '-' && num1 < num2) {
+                        [num1, num2] = [num2, num1];
+                    }
+                    break;
+                case 15:
+                case 16: // Niveles 15-16: Números hasta 150
+                    num1 = getRandomInt(100, 150);
+                    num2 = getRandomInt(8, 35);
+                    operation = ['+', '-', '*', '/'][getRandomInt(0, 3)];
+                    if (operation === '/') {
+                        num1 = num2 * getRandomInt(7, 30);
+                    } else if (operation === '-' && num1 < num2) {
+                        [num1, num2] = [num2, num1];
+                    }
+                    break;
+                case 17:
+                case 18: // Niveles 17-18: Multiplicaciones y divisiones con números más grandes
+                    num1 = getRandomInt(120, 180);
+                    num2 = getRandomInt(10, 40);
+                    operation = ['+', '-', '*', '/'][getRandomInt(0, 3)];
+                    if (operation === '/') {
+                        num1 = num2 * getRandomInt(8, 35);
+                    } else if (operation === '-' && num1 < num2) {
+                        [num1, num2] = [num2, num1];
+                    }
+                    break;
+                case 19:
+                case 20: // Niveles 19-20 (Zona de puntaje alto final): Desafío significativo antes de los niveles finales
+                    num1 = getRandomInt(150, 200);
+                    num2 = getRandomInt(12, 50);
+                    operation = ['+', '-', '*', '/'][getRandomInt(0, 3)];
+                    if (operation === '/') {
+                        num1 = num2 * getRandomInt(10, 40);
+                    } else if (operation === '-' && num1 < num2) {
+                        [num1, num2] = [num2, num1];
+                    }
+                    break;
+                case 21:
+                case 22: // Niveles 21-22: Gran aumento en los rangos de números
+                    num1 = getRandomInt(200, 300);
+                    num2 = getRandomInt(15, 60);
+                    operation = ['+', '-', '*', '/'][getRandomInt(0, 3)];
+                    if (operation === '/') {
+                        num1 = num2 * getRandomInt(10, 30);
+                    } else if (operation === '-' && num1 < num2) {
+                        [num1, num2] = [num2, num1];
+                    }
+                    break;
+                case 23:
+                case 24: // Niveles 23-24: Números aún mayores
+                    num1 = getRandomInt(250, 400);
+                    num2 = getRandomInt(20, 70);
+                    operation = ['+', '-', '*', '/'][getRandomInt(0, 3)];
+                    if (operation === '/') {
+                        num1 = num2 * getRandomInt(12, 35);
+                    } else if (operation === '-' && num1 < num2) {
+                        [num1, num2] = [num2, num1];
+                    }
+                    break;
+                case 25:
+                case 26: // Niveles 25-26: Operaciones muy grandes
+                    num1 = getRandomInt(300, 500);
+                    num2 = getRandomInt(25, 80);
+                    operation = ['+', '-', '*', '/'][getRandomInt(0, 3)];
+                    if (operation === '/') {
+                        num1 = num2 * getRandomInt(15, 40);
+                    } else if (operation === '-' && num1 < num2) {
+                        [num1, num2] = [num2, num1];
+                    }
+                    break;
+                case 27:
+                case 28: // Niveles 27-28: Límite superior de los rangos
+                    num1 = getRandomInt(400, 600);
+                    num2 = getRandomInt(30, 90);
+                    operation = ['+', '-', '*', '/'][getRandomInt(0, 3)];
+                    if (operation === '/') {
+                        num1 = num2 * getRandomInt(18, 45);
+                    } else if (operation === '-' && num1 < num2) {
+                        [num1, num2] = [num2, num1];
+                    }
+                    break;
+                case 29:
+                case 30: // Niveles 29-30 (Zona de puntaje alto final): Máximo desafío
+                    num1 = getRandomInt(500, 800);
+                    num2 = getRandomInt(40, 100);
+                    operation = ['+', '-', '*', '/'][getRandomInt(0, 3)];
+                    if (operation === '/') {
+                        num1 = num2 * getRandomInt(20, 50);
+                    } else if (operation === '-' && num1 < num2) {
+                        [num1, num2] = [num2, num1];
+                    }
+                    break;
+                default: // Por si acaso se llega a un nivel no especificado
+                    num1 = getRandomInt(1, 1000);
+                    num2 = getRandomInt(1, 100);
+                    operation = ['+', '-', '*', '/'][getRandomInt(0, 3)];
+                    if (operation === '/') {
+                        num1 = num2 * getRandomInt(1, 50);
+                    } else if (operation === '-' && num1 < num2) {
+                        [num1, num2] = [num2, num1];
+                    }
+                    break;
+            }
+
+            // Calcula la respuesta
+            switch (operation) {
+                case '+': answer = num1 + num2; break;
+                case '-': answer = num1 - num2; break;
+                case '*': answer = num1 * num2; break;
+                case '/': answer = num1 / num2; break;
+            }
+            
+            questionElement.textContent = `¿Cuánto es ${num1} ${operation} ${num2}?`;
+            currentQuestion = { question: questionElement.textContent, answer: answer };
+
+            options.push(answer);
+            while (options.length < 4) {
+                let wrongAnswer;
+                do {
+                    // Genera respuestas incorrectas cercanas a la correcta, pero no iguales
+                    wrongAnswer = answer + getRandomInt(-Math.max(2, Math.floor(answer * 0.2)), Math.max(2, Math.floor(answer * 0.2)));
+                    // Asegura que no sea 0 si la respuesta correcta no lo es y si la operación no es de resta que pueda resultar en 0
+                    if (wrongAnswer === 0 && answer !== 0) {
+                        wrongAnswer = getRandomInt(1, 10); // Evita 0 si la respuesta no es 0
+                    }
+                    if (wrongAnswer < 0) wrongAnswer = Math.abs(wrongAnswer); // Evita opciones negativas a menos que la respuesta lo sea
+                    // Para división, asegúrate de que no genere decimales si la respuesta es entera
+                    if (operation === '/' && wrongAnswer % 1 !== 0) {
+                        wrongAnswer = Math.round(wrongAnswer); // Redondea al entero más cercano
+                    }
+                } while (options.includes(wrongAnswer) || wrongAnswer === answer);
+
+                options.push(Math.round(wrongAnswer)); // Redondea al entero más cercano
+            }
+            options = shuffleArray(options);
+
+            // Rellena los botones de opciones
+            optionsContainer.innerHTML = '';
+            options.forEach(opt => {
+                const button = document.createElement('button');
+                button.classList.add('option-button');
+                button.textContent = opt;
+                button.addEventListener('click', () => checkAnswer(opt));
+                optionsContainer.appendChild(button);
+            });
+
+            // Muestra el área de la pregunta y oculta el botón del temporizador
+            questionArea.classList.remove('hidden');
+            mainTimerButton.classList.add('hidden');
+            retryButton.classList.add('hidden');
+            messageElement.textContent = "¡Rápido! Responde correctamente.";
+            playSound(challengeSound);
+        }
+
+        /**
+         * Comprueba si la respuesta seleccionada por el usuario es correcta.
+         * @param {number} selectedAnswer - La respuesta elegida por el usuario.
+         */
+        function checkAnswer(selectedAnswer) {
+            if (!gameActive) return; // Evita responder si el juego no está activo
+
+            clearInterval(questionTimerInterval); // Detiene el cronómetro de la pregunta inmediatamente al responder
+
+            // Deshabilita los botones y da feedback visual
+            const optionButtons = optionsContainer.querySelectorAll('.option-button');
+            optionButtons.forEach(button => {
+                button.disabled = true;
+                if (parseInt(button.textContent) === currentQuestion.answer) {
+                    button.style.backgroundColor = '#27ae60'; // Verde para correcta
+                } else if (parseInt(button.textContent) === selectedAnswer) {
+                    button.style.backgroundColor = '#c0392b'; // Rojo para incorrecta
+                }
+            });
+
+            // Pequeño retardo para mostrar el feedback visual antes de continuar
+            setTimeout(() => {
+                if (selectedAnswer === currentQuestion.answer) {
+                    currentScore += 10 * currentLevel; // Puntaje basado en el nivel
+                    mapPiecesFound++;
+                    revealMapPiece();
+                    playSound(correctSound);
+                    messageElement.textContent = "¡Correcto! Siguiente acertijo...";
+                    scoreDisplay.textContent = `Puntaje: ${currentScore}`;
+
+                    if (mapPiecesFound < totalMapPieces) {
+                        currentLevel++;
+                        currentLevelDisplay.textContent = `Nivel: ${currentLevel}`;
+                        // El temporizador de la pregunta se reinicia en generateQuestion()
+                        generateQuestion(); // Genera la siguiente pregunta
+                    } else {
+                        endGame(true); // ¡El jugador ha ganado!
+                    }
+                } else {
+                    playSound(wrongSound);
+                    messageElement.textContent = `¡Incorrecto! La respuesta era ${currentQuestion.answer}.`;
+                    questionElement.classList.add('shake'); // Agrega la animación de "shake"
+                    setTimeout(() => {
+                        questionElement.classList.remove('shake'); // Elimina la animación después de un tiempo
+                    }, 600); // Duración de la animación
+                    endGame(false); // El jugador ha perdido
+                }
+            }, 700); // Retardo de 0.7 segundos
+        }
+
+        /**
+         * Inicia el temporizador del juego y el flujo de preguntas.
+         */
+        function startTimer() {
+            if (gameActive) return; // Evita iniciar múltiples temporizadores
+            gameActive = true;
+            timerSeconds = 0; // Reinicia el tiempo total del juego
+            mainTimerButton.textContent = "EN JUEGO"; // Cambia el texto del botón a "EN JUEGO"
+            // REMOVED: mainTimerButton.classList.add('active-timer'); // Elimina la clase que ajusta el tamaño de fuente para el tiempo
+            mainTimerButton.classList.remove('hidden'); // Asegura que el botón sea visible
+
+            timerInterval = setInterval(() => {
+                timerSeconds++; // Sigue incrementando para el cálculo de high scores
+                // REMOVED: mainTimerButton.textContent = formatTime(timerSeconds); // Ya no se muestra el tiempo total en el botón
+                if (gameActive && !questionArea.classList.contains('hidden') && timerSeconds % 5 === 0) {
+                    playSound(tickSound);
+                }
+            }, 1000);
+
+            // Inicia la primera pregunta después de un breve retraso
+            setTimeout(() => {
+                generateQuestion();
+            }, 1500);
+        }
+
+        /**
+         * Reinicia los temporizadores del juego.
+         */
+        function resetTimers() {
+            clearInterval(timerInterval);
+            clearInterval(questionTimerInterval);
+            timerSeconds = 0;
+            questionCurrentSeconds = 0;
+            mainTimerButton.textContent = "PULSA"; // Restablece a "PULSA"
+            // REMOVED: mainTimerButton.classList.remove('active-timer'); // Asegura que la clase de tiempo no esté activa
+            questionChronometer.textContent = formatTime(questionCurrentSeconds);
+        }
+
+        /**
+         * Revela una pieza del mapa.
+         */
+        function revealMapPiece() {
+            // mapPiecesFound ya ha sido incrementado en checkAnswer
+            const piece = document.getElementById(`map-piece-${mapPiecesFound}`);
+            if (piece) {
+                piece.classList.add('revealed');
+                piece.textContent = mapPiecesFound; // Muestra el número de la pieza
+            }
+        }
+
+        /**
+         * Termina el juego, muestra el resultado y la opción de reintentar.
+         * @param {boolean} won - Verdadero si el jugador ganó, falso si perdió.
+         */
+        function endGame(won) {
+            gameActive = false;
+            clearInterval(timerInterval); // Detiene el temporizador total
+            clearInterval(questionTimerInterval); // Detiene el temporizador de la pregunta
+            optionsContainer.innerHTML = ''; // Limpia las opciones
+            questionArea.classList.add('hidden'); // Oculta el área de preguntas
+            mainTimerButton.classList.remove('hidden'); // Muestra el botón del temporizador
+            mainTimerButton.textContent = "PULSA"; // Restablece el texto a "PULSA"
+            // REMOVED: mainTimerButton.classList.add('active-timer'); // Ya no es un temporizador visible
+
+            let isNewHighScore = false;
+            // Check if current score is higher than the lowest high score or if there are less than 3 scores
+            if (highScores.length < 3 || currentScore > (highScores.length > 0 ? highScores[highScores.length - 1].score : -1)) {
+                isNewHighScore = true;
+            } else if (currentScore === (highScores.length > 0 ? highScores[highScores.length - 1].score : -1)) {
+                // If scores are equal, check time: lower time is better
+                if (timerSeconds < (highScores.length > 0 ? highScores[highScores.length - 1].time : Infinity)) {
+                    isNewHighScore = true;
+                }
+            }
+
+            if (isNewHighScore) {
+                pendingHighScoreDetails = { score: currentScore, time: timerSeconds };
+                showNicknameInputModal();
+            } else {
+                // If not a new high score, but game ended, just show retry button
+                messageElement.textContent = `¡Juego Terminado! Tu puntaje final: ${currentScore}.`;
+                retryButton.classList.remove("hidden");
+                updateHighScoresDisplay(); // Ensure high scores are updated/displayed if modal not shown
+            }
+        }
+
+        /**
+         * Actualiza la lista de puntajes altos guardados en localStorage.
+         * @param {number} score - El puntaje obtenido en la partida actual.
+         * @param {number} timeTaken - El tiempo total en segundos para lograr el puntaje.
+         * @param {string} playerName - El nombre del jugador para el puntaje alto.
+         */
+        function updateHighScores(score, timeTaken = 0, playerName = "Anónimo") {
+            highScores.push({ score: score, time: timeTaken, name: playerName });
+            
+            // Sort by score (descending), then by time (ascending) for ties
+            highScores.sort((a, b) => {
+                if (b.score !== a.score) {
+                    return b.score - a.score;
+                }
+                return a.time - b.time; // Lower time is better for equal scores
+            });
+
+            highScores = highScores.slice(0, 3); // Keep only the top 3
+            localStorage.setItem("highScores", JSON.stringify(highScores));
+            updateHighScoresDisplay();
+        }
+
+        /**
+         * Actualiza la lista de puntajes altos en la interfaz de usuario.
+         */
+        function updateHighScoresDisplay() {
+            const highScoresList = document.getElementById("high-scores-list");
+            let displayHtml = '';
+            for (let i = 0; i < 3; i++) {
+                if (highScores[i]) {
+                    displayHtml += `<li>${i + 1}. ${highScores[i].name}: ${highScores[i].score} puntos (Tiempo: ${formatTime(highScores[i].time)})</li>`;
+                } else {
+                    displayHtml += `<li>${i + 1}. Pendiente</li>`; // Display "Pendiente" for empty slots
+                }
+            }
+            highScoresList.innerHTML = displayHtml;
+        }
+
+        /**
+         * Muestra la pantalla de felicitación por un puntaje alto.
+         * @param {string} playerName - El nombre del jugador.
+         */
+        function showHighScoreSplash(playerName) {
+            gameContainer.classList.remove('show');
+            gameContainer.classList.add('hidden');
+            highScoreSplashScreen.classList.remove('hidden');
+            highScoreSplashScreen.classList.add('show');
+            highScoreMessage.textContent = `¡Felicidades, ${playerName}! Jason Dafnis te felicita por esta hazaña.`;
+            playSound(winSound); // Reproducir sonido de victoria para el high score
+        }
+
+        /**
+         * Reinicia el juego a su estado inicial.
+         */
+        function resetGame() {
+            mapPiecesFound = 0;
+            currentScore = 0;
+            currentLevel = 1;
+            scoreDisplay.textContent = `Puntaje: ${currentScore}`;
+            currentLevelDisplay.textContent = `Nivel: ${currentLevel}`;
+            messageElement.textContent = "¡Pulsa el cronómetro para iniciar el acertijo!";
+            mainTimerButton.textContent = "PULSA"; // Establece el texto inicial a "PULSA"
+            // REMOVED: mainTimerButton.classList.remove('active-timer'); // Asegura que la clase de tiempo no esté activa
+            questionChronometer.textContent = "00:00:00"; // Reinicia el cronómetro de la pregunta
+            questionArea.classList.add("hidden");
+            retryButton.classList.add("hidden");
+            mainTimerButton.classList.remove('hidden'); // Asegura que el botón del temporizador esté visible para iniciar
+            gameActive = false; // Reinicia el estado del juego
+            resetTimers(); // Asegura que no haya temporizadores corriendo
+
+            pendingHighScoreDetails = null; // Clear pending high score details
+
+            // Regenera las piezas del mapa para el nuevo total de niveles
+            mapPiecesContainer.innerHTML = '';
+            for (let i = 1; i <= totalMapPieces; i++) {
+                const piece = document.createElement('div');
+                piece.classList.add('map-piece');
+                piece.id = `map-piece-${i}`;
+                piece.textContent = '?';
+                mapPiecesContainer.appendChild(piece);
+            }
+            updateHighScoresDisplay(); // Actualiza la visualización de los puntajes al reiniciar
+            highScoreSplashScreen.classList.add('hidden'); // Asegura que el splash de high score esté oculto
+            gameContainer.classList.remove('hidden'); // Asegura que el contenedor del juego esté visible
+            gameContainer.classList.add('show'); // Asegura que el contenedor del juego esté visible
+        }
+
+        // --- Nickname Input Functions ---
+
+        function showNicknameInputModal() {
+            nicknameInputModal.style.display = 'flex';
+            nicknameInputField.value = ''; // Clear previous input
+            nicknameInputField.focus(); // Focus the input field
+        }
+
+        function hideNicknameInputModal() {
+            nicknameInputModal.style.display = 'none';
+        }
+
+        function handleNicknameInput(key) {
+            let currentNickname = nicknameInputField.value;
+            const maxLength = nicknameInputField.maxLength;
+
+            if (key === 'BORRAR') { // Changed to 'BORRAR' to match button text
+                nicknameInputField.value = currentNickname.slice(0, -1);
+            } else if (key === 'ESPACIO') { // Changed to 'ESPACIO'
+                 if (currentNickname.length < maxLength) {
+                    nicknameInputField.value += ' ';
+                }
+            }
+            else {
+                if (currentNickname.length < maxLength) {
+                    nicknameInputField.value += key;
+                }
+            }
+        }
+
+        function processNickname() {
+            const nickname = nicknameInputField.value.trim().toUpperCase();
+            if (nickname === "") {
+                alert("Por favor, introduce un Nickname válido.");
+                return;
+            }
+
+            hideNicknameInputModal();
+            if (pendingHighScoreDetails) {
+                updateHighScores(pendingHighScoreDetails.score, pendingHighScoreDetails.time, nickname);
+                showHighScoreSplash(nickname);
+            } else {
+                // Should not happen if logic is correct
+                console.error("No hay detalles de puntaje alto pendientes.");
+                retryButton.classList.remove("hidden"); // Fallback
+            }
+        }
+
+        function cancelNicknameInput() {
+            hideNicknameInputModal();
+            // If the user cancels, treat it as if no nickname was entered for the high score.
+            // Still update high scores with a generic name if it met the criteria, but don't show specific splash.
+            if (pendingHighScoreDetails) {
+                updateHighScores(pendingHighScoreDetails.score, pendingHighScoreDetails.time, "Jugador");
+            }
+            messageElement.textContent = `¡Juego Terminado! Tu puntaje final: ${currentScore}.`;
+            retryButton.classList.remove("hidden");
+        }
+
+
+        // --- Event Listeners y Configuración Inicial ---
+
+        // Se ejecuta cuando el DOM está completamente cargado
+        document.addEventListener('DOMContentLoaded', () => {
+            // Muestra el splash screen al cargar
+            splashScreen.style.display = 'flex';
+
+            // Oculta el splash screen después de 3 segundos o al hacer clic
+            const hideSplashScreen = () => {
+                splashScreen.classList.add('fadeOut');
+                gameContainer.classList.add('show'); // Muestra el contenedor del juego
+                setTimeout(() => {
+                    splashScreen.style.display = 'none';
+                    gameTitle.classList.add('hidden'); // Oculta el título del juego principal
+                }, 500); // Coincide con la duración de la animación fadeOut
+            };
+
+            // Ocultar splash screen después de 3 segundos
+            setTimeout(hideSplashScreen, 3000); 
+
+            // Ocultar splash screen al hacer clic/tocar en cualquier parte
+            splashScreen.addEventListener('click', hideSplashScreen);
+            splashScreen.addEventListener('touchstart', hideSplashScreen); // Para dispositivos táctiles
+
+            resetGame(); // Establece el juego en su estado inicial
+        });
+
+        // Manejador de clic para el botón principal del temporizador
+        mainTimerButton.addEventListener('click', () => {
+            if (!gameActive) {
+                resetGame(); // Reinicia el juego antes de iniciar uno nuevo
+                startTimer(); // Inicia el temporador y el juego
+            }
+        });
+
+        // Manejador de clic para el botón de reintentar
+        retryButton.addEventListener("click", () => {
+            resetGame(); // Reinicia el juego
+        });
+
+        // Manejador de clic para el botón "Volver a Jugar" en el splash de puntaje alto
+        playAgainButton.addEventListener("click", () => {
+            resetGame(); // Reinicia el juego
+        });
+
+        // Manejo de modales
+        highScoresToggle.addEventListener('click', () => {
+            highScoresModal.style.display = 'flex';
+        });
+
+        closeHighScores.addEventListener('click', () => {
+            highScoresModal.style.display = 'none';
+        });
+
+        mapToggle.addEventListener('click', () => {
+            mapModal.style.display = 'flex';
+        });
+
+        closeMapModal.addEventListener('click', () => {
+            mapModal.style.display = 'none';
+        });
+
+        // Cerrar modales al hacer clic fuera de ellos
+        window.addEventListener('click', (event) => {
+            if (event.target == highScoresModal) {
+                highScoresModal.style.display = 'none';
+            }
+            if (event.target == mapModal) {
+                mapModal.style.display = 'none';
+            }
+        });
+
+        // Virtual Keyboard Event Listeners
+        keyboardContainer.addEventListener('click', (event) => {
+            if (event.target.classList.contains('keyboard-button')) {
+                const key = event.target.textContent;
+                handleNicknameInput(key);
+            }
+        });
+
+        confirmNicknameButton.addEventListener('click', processNickname);
+        cancelNicknameButton.addEventListener('click', cancelNicknameInput);
+
+        // Allow 'Enter' key press to confirm nickname
+        nicknameInputField.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                processNickname();
+            }
+        });
+        
+        // Disable real keyboard input for nickname field (already readonly, but good practice)
+        nicknameInputField.addEventListener('keydown', (event) => {
+            event.preventDefault(); // Prevent default key actions
+        });
+        nicknameInputField.addEventListener('paste', (event) => {
+            event.preventDefault(); // Prevent pasting
+        });
+
+    </script>
+</body>
+</html>
