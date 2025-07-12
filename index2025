@@ -1,1 +1,1858 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Misión Matemática</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        /* Base para Modo Oscuro y Centrado */
+        body {
+            font-family: 'Press Start 2P', cursive, sans-serif;
+            background-color: #2c3e50;
+            background-image: url('https://via.placeholder.com/1920x1080/1a2a3a/FFFFFF?text=Espacio+Estrellado'); /* Fondo placeholder */
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100dvh; /* Usa 100dvh para ocupar toda la altura del viewport */
+            margin: 0;
+            color: #ecf0f1;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+            padding: 5px; /* Reducido el padding general */
+            box-sizing: border-box;
+            overflow: hidden; /* ¡Crucial para evitar el scroll! */
+            position: relative; /* Para posicionar elementos fijos */
+        }
 
+        /* --- Splash Screen --- */
+        .splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #1a2a3a;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+            color: #f1c40f;
+            text-align: center;
+            opacity: 0;
+            animation: fadeIn 1s ease-out forwards;
+        }
+        
+        .splash-screen.high-score {
+            background-color: #0d1a26; /* Un color diferente para el splash de high score */
+            color: #2ecc71; /* Color de texto diferente */
+        }
+
+        .splash-screen h1 {
+            font-size: clamp(1.2em, 4.5vw, 2.0em); /* Ajustado para ser similar al tamaño del párrafo */
+            margin-bottom: 20px;
+            text-shadow: 4px 4px 10px rgba(0, 0, 0, 0.8);
+            color: #f1c40f;
+            letter-spacing: 2px;
+        }
+        
+        .splash-screen.high-score h1 {
+            color: #2ecc71; /* Color de texto diferente para el h1 del high score splash */
+        }
+
+        .splash-screen p {
+            font-size: clamp(0.7em, 2.5vw, 1.2em); /* Reduced font size for intro text */
+            color: #ecf0f1;
+            animation: pulse 1.5s infinite alternate; /* Animación de "pulsación" */
+        }
+        
+        .splash-screen.high-score p {
+             color: #3498db;
+             animation: none; /* No animar el texto en el high score splash */
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; display: none; } /* Oculta completamente al final */
+        }
+
+        @keyframes pulse {
+            from { transform: scale(1); opacity: 1; }
+            to { transform: scale(1.05); opacity: 0.8; }
+        }
+
+        /* --- Game Container --- */
+        .game-container {
+            background-color: rgba(44, 62, 80, 0.95);
+            padding: 10px 15px; /* Más compacto */
+            border-radius: 15px; /* Borde más pequeño */
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.6); /* Sombra ajustada */
+            text-align: center;
+            max-width: 600px; /* Ancho máximo ajustado */
+            width: 98%; /* Ocupa casi todo el ancho */
+            border: 4px solid #34495e; /* Borde más delgado */
+            position: relative;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between; /* Distribuye el espacio entre elementos */
+            flex-grow: 1; /* Permite que ocupe el espacio disponible */
+            min-height: calc(100dvh - 10px); /* Ajusta la altura mínima para que encaje */
+            opacity: 0; /* Oculto inicialmente */
+            transition: opacity 0.5s ease-in;
+        }
+        
+        .game-container.show {
+            opacity: 1;
+        }
+
+        /* Título del juego principal (se ocultará después del splash) */
+        .game-title {
+            color: #f1c40f;
+            font-size: clamp(1.4em, 4vw, 2.5em); /* Ligeramente más pequeño, ya que no es el foco principal */
+            margin-bottom: 5px; /* Margen muy reducido */
+            text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.7);
+            letter-spacing: 1px;
+            line-height: 1.1;
+            /* Se ocultará con JavaScript */
+            display: none; 
+        }
+        
+        .score-level-bar {
+            display: flex;
+            flex-direction: column; /* Changed to column to stack items */
+            align-items: center;   /* Center items horizontally within the column */
+            width: 100%;
+            max-width: 400px; /* Ancho máximo para la barra */
+            margin-bottom: 10px; /* Margen reducido */
+            padding-top: 5px; /* Pequeño padding superior para compensar el título oculto */
+        }
+
+        #score-display, #current-level-display {
+            font-size: clamp(1em, 3.2vw, 1.6em); /* Fuente más pequeña */
+            font-weight: bold;
+            border: 2px solid;
+            padding: 5px 8px; /* Padding reducido */
+            border-radius: 6px;
+            background-color: #2c3e50;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+            white-space: nowrap; /* Evita que el texto se rompa */
+            width: 100%; /* Take full width of parent column */
+            box-sizing: border-box; /* Include padding and border in the width */
+            text-align: center !important; /* Center text for both when stacked */
+        }
+        
+        #score-display {
+            color: #3498db;
+            border-color: #3498db;
+            margin-bottom: 8px; /* Add vertical spacing below score */
+        }
+
+        #current-level-display {
+            color: #2ecc71;
+            border-color: #2ecc71;
+        }
+
+        #message {
+            font-size: clamp(0.8em, 3vw, 1.4em); /* Fuente más pequeña */
+            margin-bottom: 10px; /* Margen reducido */
+            min-height: 1.5em; /* Altura mínima ajustada */
+            font-weight: bold;
+            color: #ecf0f1;
+            padding: 5px 8px; /* Padding reducido */
+            border-radius: 5px;
+            background-color: rgba(0, 0, 0, 0.2);
+            width: 100%;
+            box-sizing: border-box;
+            word-wrap: break-word;
+        }
+
+        .timer-area {
+            margin: 10px 0; /* Margen reducido */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex-grow: 0;
+        }
+
+        #main-timer-button {
+            font-family: 'Press Start 2P', cursive, sans-serif;
+            font-size: clamp(1.2em, 5vw, 2.5em); /* Fuente más pequeña para "PULSA" */
+            font-weight: bold;
+            color: #ecf0f1; /* Changed from #f1c40f (yellow) */
+            background-color: #34495e;
+            border: 5px solid #ecf0f1; /* Changed from #f1c40f (yellow) */
+            border-radius: 50%;
+            width: clamp(140px, 38vw, 220px); /* Tamaños más pequeños */
+            height: clamp(140px, 38vw, 220px); /* Tamaños más pequeños */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.6); /* Sombra ajustada */
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+        }
+
+        /* REMOVED: #main-timer-button.active-timer as it no longer displays time */
+
+        #main-timer-button:hover {
+            background-color: #4a6480;
+            border-color: #3498db; /* Changed from #ffd700 (yellow) */
+            transform: scale(1.03);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.7);
+        }
+
+        #main-timer-button:active {
+            transform: scale(0.96);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+        }
+
+        #retry-button, #play-again-button {
+            font-family: 'Press Start 2P', cursive, sans-serif;
+            font-size: clamp(0.9em, 3vw, 1.3em); /* Fuente más pequeña */
+            padding: 10px 20px; /* Padding reducido */
+            background-color: #e67e22;
+            color: white;
+            border: none;
+            border-radius: 8px; /* Radio de borde más pequeño */
+            cursor: pointer;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            margin-top: 10px; /* Margen reducido */
+        }
+
+        #retry-button:hover, #play-again-button:hover {
+            background-color: #d35400;
+            transform: translateY(-1px);
+        }
+        #retry-button:active, #play-again-button:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .question-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 10px; /* Margen reducido */
+            animation: slideInUp 0.5s ease-out;
+            width: 100%;
+            flex-grow: 1; /* Permite que ocupe el espacio disponible */
+            justify-content: center; /* Centra verticalmente si hay espacio */
+        }
+
+        @keyframes slideInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        #question {
+            font-size: clamp(1.2em, 4vw, 2em); /* Fuente más pequeña */
+            margin-bottom: 15px; /* Margen reducido */
+            color: #f1c40f;
+            min-height: 1.8em; /* Altura mínima ajustada */
+            background-color: rgba(52, 73, 94, 0.7);
+            padding: 6px 10px; /* Padding reducido */
+            border-radius: 6px;
+            border: 2px solid #f1c40f;
+            max-width: 95%;
+            box-sizing: border-box;
+            word-wrap: break-word;
+        }
+
+        #options-container {
+            display: grid;
+            grid-template-columns: 1fr; /* Una columna por defecto para móviles */
+            gap: 10px; /* Gap reducido */
+            width: 100%;
+            max-width: 350px; /* Ancho máximo ajustado */
+            margin-bottom: 10px; /* Margen reducido */
+        }
+
+        .option-button {
+            background-color: #3498db;
+            color: white;
+            padding: 12px 18px; /* Padding reducido */
+            font-size: clamp(1em, 3.5vw, 1.4em); /* Fuente más pequeña */
+            border: 2px solid #2980b9;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.15s ease, box-shadow 0.2s ease;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            font-family: 'Press Start 2P', cursive, sans-serif;
+        }
+
+        .option-button:hover {
+            background-color: #2980b9;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+        }
+
+        .option-button:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+            background-color: #2471a3;
+        }
+
+        /* Cronómetro por pregunta */
+        #question-chronometer {
+            font-family: 'Press Start 2P', cursive, sans-serif;
+            font-size: clamp(1em, 3.5vw, 1.5em);
+            color: #e74c3c; /* Rojo que combina con la temática */
+            margin-top: 15px; /* Margen para separarlo de las opciones */
+            padding: 5px 10px;
+            border: 2px solid #e74c3c;
+            border-radius: 5px;
+            background-color: rgba(0, 0, 0, 0.3);
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+            letter-spacing: 1px;
+        }
+
+        /* Botones flotantes de información */
+        .info-button {
+            position: fixed;
+            bottom: 8px; /* Ajustado más abajo y cerca del borde */
+            width: 45px; /* Tamaño más pequeño */
+            height: 45px; /* Tamaño más pequeño */
+            border-radius: 50%;
+            background-color: #f1c40f;
+            color: #2c3e50;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Press Start +2P', cursive, sans-serif;
+            font-size: 1.5em; /* Fuente más pequeña */
+            cursor: pointer;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.5);
+            transition: transform 0.2s ease, background-color 0.3s ease;
+            z-index: 100;
+        }
+
+        .info-button:hover {
+            transform: scale(1.06);
+            background-color: #e67e22;
+        }
+
+        #high-scores-toggle {
+            right: 8px; /* Ajustado más cerca del borde */
+        }
+
+        #map-toggle {
+            left: 8px; /* Ajustado más cerca del borde */
+        }
+
+        /* Modal de información */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 101;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.85);
+            justify-content: center;
+            align-items: center;
+            padding: 8px; /* Padding reducido */
+            box-sizing: border-box;
+        }
+
+        .modal-content {
+            background-color: #2c3e50;
+            margin: auto;
+            padding: 18px; /* Padding reducido */
+            border: 3px solid #f1c40f; /* Borde más delgado */
+            border-radius: 10px; /* Radio de borde más pequeño */
+            width: 95%;
+            max-width: 400px; /* Ancho máximo reducido */
+            box-shadow: 0 6px 12px rgba(0,0,0,0.7);
+            position: relative;
+            animation: slideIn 0.3s ease-out;
+            max-height: 95dvh;
+            overflow-y: auto;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .close-button {
+            color: #aaa;
+            position: absolute;
+            top: 4px;
+            right: 12px;
+            font-size: 28px; /* Tamaño más pequeño */
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .close-button:hover,
+        .close-button:focus {
+            color: #e74c3c;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        
+        .modal-content h2 {
+            color: #f1c40f;
+            font-size: clamp(1em, 3.5vw, 1.6em); /* Fuente más pequeña */
+            margin-bottom: 12px; /* Margen reducido */
+        }
+
+        ul#high-scores-list {
+            list-style-type: none;
+            padding-left: 0;
+            font-size: clamp(0.8em, 2.5vw, 1.1em); /* Fuente más pequeña */
+            margin-bottom: 0;
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 6px;
+            border-radius: 5px;
+            border: 1px dashed #f1c40f;
+            text-align: left;
+        }
+
+        ul#high-scores-list li {
+            margin: 5px 0;
+            color: #ecf0f1;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
+            padding-bottom: 2px;
+            border-bottom: 1px dotted rgba(255,255,255,0.2);
+        }
+
+        ul#high-scores-list li:last-child {
+            border-bottom: none;
+        }
+
+        #map-pieces-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 8px; /* Margen reducido */
+            min-height: 90px; /* Altura mínima ajustada */
+            border: 2px dashed #f1c40f; /* Borde más delgado */
+            padding: 10px; /* Padding reducido */
+            border-radius: 12px;
+            background-color: rgba(52, 73, 94, 0.8);
+            gap: 8px; /* Gap reducido */
+            max-height: 250px; /* Allow scroll if many pieces */
+            overflow-y: auto;
+        }
+
+        .map-piece {
+            width: clamp(40px, 13vw, 70px); /* Tamaños más pequeños */
+            height: clamp(40px, 13vw, 70px); /* Tamaños más pequeños */
+            margin: 2px; /* Margen reducido */
+            background-color: #7f8c8d;
+            border: 2px solid #34495e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: clamp(0.8em, 2.2vw, 1.1em); /* Fuente más pequeña */
+            color: #ecf0f1;
+            box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.5);
+            border-radius: 5px;
+            transition: background-color 0.5s ease, transform 0.3s ease, border-color 0.5s ease;
+        }
+
+        .map-piece.revealed {
+            background-color: #f1c40f;
+            border-color: #e67e22;
+            font-weight: bold;
+            color: #34495e;
+            text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
+            transform: scale(1.03);
+            animation: pieceReveal 0.6s ease-out;
+        }
+
+        @keyframes pieceReveal {
+            0% { transform: scale(0.5) rotateY(90deg); opacity: 0; }
+            70% { transform: scale(1.03) rotateY(-10deg); opacity: 1; }
+            100% { transform: scale(1) rotateY(0deg); }
+        }
+
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            50% { transform: translateX(6px); }
+            75% { transform: translateX(-6px); }
+            100% { transform: translateX(0); }
+        }
+
+        .shake {
+            animation: shake 0.3s ease-in-out 2;
+        }
+
+        /* Media queries para ajustes finos en pantallas más grandes */
+        @media (min-width: 600px) {
+            #options-container {
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+            }
+            .info-button {
+                width: 55px;
+                height: 55px;
+                font-size: 1.7em;
+                bottom: 12px;
+                right: 12px;
+                left: 12px;
+            }
+            .modal-content {
+                padding: 25px;
+            }
+        }
+        @media (min-width: 768px) {
+            .game-container {
+                padding: 20px 25px;
+            }
+            .game-title {
+                font-size: clamp(1.8em, 3vw, 2.8em);
+            }
+            #main-timer-button {
+                width: clamp(180px, 28vw, 280px);
+                height: clamp(180px, 28vw, 280px);
+            }
+            #question {
+                font-size: clamp(1.6em, 2.8vw, 2.3em);
+            }
+            .option-button {
+                font-size: clamp(1.2em, 2vw, 1.6em);
+            }
+        }
+
+        /* --- Nickname Input Modal Styles --- */
+        #nickname-input-modal .modal-content {
+            max-width: 500px;
+            padding: 25px;
+            text-align: center;
+        }
+
+        #nickname-input-modal h2 {
+            font-size: clamp(1.1em, 4vw, 1.8em);
+            margin-bottom: 20px;
+            color: #2ecc71; /* Greenish color for success/input */
+        }
+
+        #nickname-input-field {
+            font-family: 'Press Start 2P', cursive, sans-serif;
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 20px;
+            font-size: clamp(1em, 3.5vw, 1.5em);
+            text-align: center;
+            background-color: #34495e;
+            color: #ecf0f1;
+            border: 3px solid #f1c40f;
+            border-radius: 8px;
+            box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.5);
+            text-transform: uppercase; /* To make nickname uppercase by default */
+        }
+
+        .keyboard-layout {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr); /* 10 columns for QWERTY-like layout */
+            gap: 6px; /* Smaller gap */
+            margin-bottom: 20px;
+        }
+
+        .keyboard-button {
+            font-family: 'Press Start 2P', cursive, sans-serif;
+            background-color: #3498db;
+            color: white;
+            padding: 10px 0; /* Adjusted padding */
+            font-size: clamp(0.7em, 2.5vw, 1em); /* Smaller font size for keys */
+            border: 2px solid #2980b9;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            user-select: none; /* Prevent text selection */
+            -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
+            text-transform: uppercase;
+        }
+        
+        .keyboard-button.wide {
+            grid-column: span 2; /* Make some buttons wider */
+        }
+
+        .keyboard-button.extra-wide {
+            grid-column: span 3; /* Make some buttons even wider */
+        }
+
+        .keyboard-button:hover {
+            background-color: #2980b9;
+            transform: translateY(-1px);
+        }
+
+        .keyboard-button:active {
+            background-color: #2471a3;
+            transform: translateY(0);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+
+        .control-buttons {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+        }
+
+        .control-buttons button {
+            font-family: 'Press Start 2P', cursive, sans-serif;
+            font-size: clamp(0.8em, 3vw, 1.2em);
+            padding: 12px 25px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        #confirm-nickname-button {
+            background-color: #2ecc71;
+            color: white;
+        }
+
+        #confirm-nickname-button:hover {
+            background-color: #27ae60;
+        }
+
+        #cancel-nickname-button {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        #cancel-nickname-button:hover {
+            background-color: #c0392b;
+        }
+    </style>
+</head>
+<body>
+    <div id="splash-screen" class="splash-screen">
+        <h1>Misión Matemática</h1>
+        <p>Pulsa para empezar...</p>
+    </div>
+
+    <div id="high-score-splash" class="splash-screen hidden high-score">
+        <h1 id="high-score-message"></h1>
+        <button id="play-again-button">Volver a Jugar</button>
+    </div>
+
+    <div class="game-container" id="game-container">
+        <h1 class="game-title">Misión Matemática</h1> 
+        <div class="score-level-bar">
+            <span id="score-display">Puntaje: 0</span>
+            <span id="current-level-display">Nivel: 1</span>
+        </div>
+        
+        <p id="message">¡Pulsa el cronómetro para iniciar el acertijo!</p>
+        <div class="timer-area">
+            <div id="main-timer-button">PULSA</div>
+            <button id="retry-button" class="hidden">Volver a intentar</button>
+        </div>
+        <div class="question-area hidden">
+            <p id="question">¿Listo para el desafío?</p>
+            <div id="options-container"></div>
+            <div id="question-chronometer">00:00:00</div>
+        </div>
+    </div>
+
+    <div id="high-scores-toggle" class="info-button">⭐</div>
+
+    <div id="high-scores-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" id="close-high-scores">&times;</span>
+            <h2>Puntajes Altos</h2>
+            <ul id="high-scores-list"></ul>
+        </div>
+    </div>
+
+    <div id="map-toggle" class="info-button">🗺️</div>
+
+    <div id="map-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" id="close-map-modal">&times;</span>
+            <h2>Tu Mapa del Tesoro:</h2>
+            <div id="map-pieces-container"></div>
+        </div>
+    </div>
+
+    <div id="nickname-input-modal" class="modal">
+        <div class="modal-content">
+            <h2>¡Nuevo Puntaje Alto!</h2>
+            <p>Ingresa tu Nickname (max 10 caracteres):</p>
+            <input type="text" id="nickname-input-field" maxlength="10" placeholder="NOMBRE" readonly>
+            <div class="keyboard-layout">
+                <button class="keyboard-button">Q</button>
+                <button class="keyboard-button">W</button>
+                <button class="keyboard-button">E</button>
+                <button class="keyboard-button">R</button>
+                <button class="keyboard-button">T</button>
+                <button class="keyboard-button">Y</button>
+                <button class="keyboard-button">U</button>
+                <button class="keyboard-button">I</button>
+                <button class="keyboard-button">O</button>
+                <button class="keyboard-button">P</button>
+                <button class="keyboard-button">A</button>
+                <button class="keyboard-button">S</button>
+                <button class="keyboard-button">D</button>
+                <button class="keyboard-button">F</button>
+                <button class="keyboard-button">G</button>
+                <button class="keyboard-button">H</button>
+                <button class="keyboard-button">J</button>
+                <button class="keyboard-button">K</button>
+                <button class="keyboard-button">L</button>
+                <button class="keyboard-button wide" data-key="borrar">BORRAR</button>
+                <button class="keyboard-button">Z</button>
+                <button class="keyboard-button">X</button>
+                <button class="keyboard-button">C</button>
+                <button class="keyboard-button">V</button>
+                <button class="keyboard-button">B</button>
+                <button class="keyboard-button">N</button>
+                <button class="keyboard-button">M</button>
+                <button class="keyboard-button">0</button>
+                <button class="keyboard-button">1</button>
+                <button class="keyboard-button">2</button>
+                <button class="keyboard-button">3</button>
+                <button class="keyboard-button">4</button>
+                <button class="keyboard-button">5</button>
+                <button class="keyboard-button">6</button>
+                <button class="keyboard-button">7</button>
+                <button class="keyboard-button">8</button>
+                <button class="keyboard-button">9</button>
+                <button class="keyboard-button extra-wide" data-key="espacio">ESPACIO</button>
+            </div>
+            <div class="control-buttons">
+                <button id="cancel-nickname-button">Cancelar</button>
+                <button id="confirm-nickname-button">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <audio id="correct-sound" src="https://www.soundjay.com/buttons/beep-07a.mp3" preload="auto"></audio>
+    <audio id="wrong-sound" src="https://www.soundjay.com/buttons/beep-06.mp3" preload="auto"></audio>
+    <audio id="challenge-sound" src="https://www.soundjay.com/buttons/button-20.mp3" preload="auto"></audio>
+    <audio id="tick-sound" src="https://www.soundjay.com/mechanical/sounds/clock-ticking-2.mp3" preload="auto"></audio>
+    <audio id="win-sound" src="https://www.soundjay.com/buttons/button-3.mp3" preload="auto"></audio>
+
+    <script>
+        // Obtención de elementos del DOM
+        const mainTimerButton = document.getElementById('main-timer-button');
+        const retryButton = document.getElementById('retry-button');
+        const questionElement = document.getElementById('question');
+        const optionsContainer = document.getElementById('options-container');
+        const questionArea = document.querySelector('.question-area');
+        const messageElement = document.getElementById('message');
+        const mapPiecesContainer = document.getElementById('map-pieces-container');
+        const scoreDisplay = document.getElementById('score-display');
+        const currentLevelDisplay = document.getElementById('current-level-display');
+        const correctSound = document.getElementById('correct-sound');
+        const wrongSound = document.getElementById('wrong-sound');
+        const challengeSound = document.getElementById('challenge-sound');
+        const tickSound = document.getElementById('tick-sound');
+        const winSound = document.getElementById('win-sound');
+
+        const highScoresToggle = document.getElementById('high-scores-toggle');
+        const highScoresModal = document.getElementById('high-scores-modal');
+        const closeHighScores = document.getElementById('close-high-scores');
+        
+        const mapToggle = document.getElementById('map-toggle');
+        const mapModal = document.getElementById('map-modal');
+        const closeMapModal = document.getElementById('close-map-modal');
+
+        const splashScreen = document.getElementById('splash-screen');
+        const highScoreSplashScreen = document.getElementById('high-score-splash');
+        const highScoreMessage = document.getElementById('high-score-message');
+        const playAgainButton = document.getElementById('play-again-button');
+        const gameContainer = document.getElementById('game-container');
+        const gameTitle = document.querySelector('.game-title'); // Selecciona el título del juego
+
+        // Nickname Input Modal Elements
+        const nicknameInputModal = document.getElementById('nickname-input-modal');
+        const nicknameInputField = document.getElementById('nickname-input-field');
+        const keyboardContainer = document.querySelector('.keyboard-layout');
+        const confirmNicknameButton = document.getElementById('confirm-nickname-button');
+        const cancelNicknameButton = document.getElementById('cancel-nickname-button');
+
+        // Nuevo elemento para el cronómetro por pregunta
+        const questionChronometer = document.getElementById('question-chronometer');
+
+        // Variables de estado del juego
+        let highScores = JSON.parse(localStorage.getItem("highScores")) || [];
+        let currentQuestion = {};
+        let mapPiecesFound = 0;
+        const totalMapPieces = 500; // Total levels are 500 now!
+        let timerSeconds = 0; // Tiempo total de la partida (se sigue registrando para puntajes altos, pero no se muestra en mainTimerButton)
+        let timerInterval; // Intervalo para el tiempo total de la partida
+        let questionCurrentSeconds = 0; // Nuevo: tiempo para la pregunta actual
+        let questionTimerInterval; // Nuevo: intervalo para el tiempo de la pregunta actual
+        let currentScore = 0;
+        let currentLevel = 1;
+        let gameActive = false; // Bandera para controlar si el juego está activo
+        let pendingHighScoreDetails = null; // Stores score and time when a new high score is pending nickname input
+
+        // --- Funciones Auxiliares ---
+
+        /**
+         * Formatea segundos en HH:MM:SS. Limite a 99 horas.
+         * @param {number} totalSeconds - El número total de segundos.
+         * @returns {string} El tiempo formateado.
+         */
+        function formatTime(totalSeconds) {
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+
+            const displayHours = String(hours).padStart(2, '0');
+            const displayMinutes = String(minutes).padStart(2, '0');
+            const displaySeconds = String(seconds).padStart(2, '0');
+
+            return `${displayHours}:${displayMinutes}:${displaySeconds}`;
+        }
+
+        /**
+         * Genera un número entero aleatorio entre min y max (inclusive).
+         * @param {number} min - El valor mínimo.
+         * @param {number} max - El valor máximo.
+         * @returns {number} Un número entero aleatorio.
+         */
+        function getRandomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        /**
+         * Mezcla aleatoriamente los elementos de un array (algoritmo de Fisher-Yates).
+         * @param {Array} array - El array a mezclar.
+         * @returns {Array} El array mezclado.
+         */
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        /**
+         * Reproduce un sonido de audio.
+         * @param {HTMLAudioElement} audioElement - El elemento de audio a reproducir.
+         */
+        function playSound(audioElement) {
+            audioElement.currentTime = 0; // Reinicia el audio para que siempre se reproduzca desde el inicio
+            audioElement.play().catch(e => console.error("Error al reproducir el sonido:", e));
+        }
+
+        // --- Funciones de Generación de Preguntas por Tipo ---
+
+        function generateBasicArithmeticQuestion(level) {
+            let num1, num2, operation, answer;
+            let questionText;
+
+            if (level <= 10) { // Suma, resta, multiplicación, división básica
+                num1 = getRandomInt(1, 20);
+                num2 = getRandomInt(1, 20);
+                operation = ['+', '-', '*', '/'][getRandomInt(0, 3)];
+            } else if (level <= 20) { // Números más grandes, incluye divisiones más complejas
+                num1 = getRandomInt(10, 50);
+                num2 = getRandomInt(2, 20);
+                operation = ['+', '-', '*', '/'][getRandomInt(0, 3)];
+            } else if (level <= 30) { // Rangos aún mayores
+                num1 = getRandomInt(20, 100);
+                num2 = getRandomInt(3, 30);
+                operation = ['+', '-', '*', '/'][getRandomInt(0, 0)]; // Solo suma y resta para empezar
+            }
+
+            if (operation === '/') {
+                num1 = num2 * getRandomInt(1, 15); // Asegura división exacta
+            } else if (operation === '-' && num1 < num2) {
+                [num1, num2] = [num2, num1]; // Asegura resultado positivo
+            }
+            
+            switch (operation) {
+                case '+': answer = num1 + num2; break;
+                case '-': answer = num1 - num2; break;
+                case '*': answer = num1 * num2; break;
+                case '/': answer = num1 / num2; break;
+            }
+            questionText = `¿Cuánto es ${num1} ${operation} ${num2}?`;
+            return { question: questionText, answer: answer };
+        }
+
+        function generateRootQuestion(level) {
+            let base, answer;
+            let questionText;
+            const roots = [2, 3, 4]; // Square, cube, fourth roots
+
+            if (level <= 40) { // Square roots of perfect squares up to 100
+                answer = getRandomInt(2, 10);
+                base = answer * answer;
+                questionText = `¿Cuál es la raíz cuadrada de ${base}?`;
+            } else if (level <= 60) { // Square roots up to 225, cube roots up to 125
+                if (Math.random() < 0.6) { // More square roots
+                    answer = getRandomInt(5, 15);
+                    base = answer * answer;
+                    questionText = `¿Cuál es la raíz cuadrada de ${base}?`;
+                } else {
+                    answer = getRandomInt(2, 5); // 2^3=8, 3^3=27, 4^3=64, 5^3=125
+                    base = answer * answer * answer;
+                    questionText = `¿Cuál es la raíz cúbica de ${base}?`;
+                }
+            } else { // Higher roots, larger numbers
+                const rootType = roots[getRandomInt(0, roots.length - 1)];
+                if (rootType === 2) {
+                    answer = getRandomInt(10, 25);
+                    base = answer * answer;
+                    questionText = `¿Cuál es la raíz cuadrada de ${base}?`;
+                } else if (rootType === 3) {
+                    answer = getRandomInt(3, 7); // 3^3=27 to 7^3=343
+                    base = answer * answer * answer;
+                    questionText = `¿Cuál es la raíz cúbica de ${base}?`;
+                } else { // Fourth root
+                    answer = getRandomInt(2, 4); // 2^4=16, 3^4=81, 4^4=256
+                    base = answer * answer * answer * answer;
+                    questionText = `¿Cuál es la raíz cuarta de ${base}?`;
+                }
+            }
+            return { question: questionText, answer: answer };
+        }
+
+        function generatePercentageQuestion(level) {
+            let value, percent, answer;
+            let questionText;
+
+            if (level <= 70) { // Basic percentages (10%, 20%, 50%, 25%, 75%) of multiples of 10 or 100
+                percent = [10, 20, 25, 50, 75][getRandomInt(0, 4)];
+                value = getRandomInt(1, 10) * (percent === 25 || percent === 75 ? 40 : 100); // Ensure easy calculation
+                answer = (value * percent) / 100;
+                questionText = `¿Cuánto es el ${percent}% de ${value}?`;
+            } else if (level <= 90) { // Any percentage of a number, results still mostly integer/simple decimal
+                percent = getRandomInt(5, 95);
+                value = getRandomInt(50, 500);
+                answer = (value * percent) / 100;
+                // Ensure simple decimal (e.g., X.0 or X.5) or integer
+                if (answer % 1 !== 0 && answer * 2 % 1 !== 0) { // If not X.0 or X.5
+                    answer = Math.round(answer); // Round to nearest integer for simplicity
+                }
+                questionText = `¿Cuánto es el ${percent}% de ${value}?`;
+            } else { // Finding the original number or percentage, slightly more complex
+                const type = getRandomInt(0, 2); // 0: find percentage, 1: find original number, 2: basic (revisit)
+                if (type === 0) { // What percentage is X of Y?
+                    value = getRandomInt(20, 200);
+                    answer = getRandomInt(5, 95);
+                    const part = Math.round((value * answer) / 100);
+                    questionText = `¿Qué porcentaje es ${part} de ${value}?`;
+                    answer = Math.round((part / value) * 100); // Recalculate answer to be integer percentage
+                } else if (type === 1) { // If X is Y%, what is the original number?
+                    percent = getRandomInt(10, 90);
+                    answer = getRandomInt(50, 300);
+                    const part = Math.round((answer * percent) / 100);
+                    questionText = `Si ${part} es el ${percent}% de un número, ¿cuál es el número?`;
+                    answer = Math.round((part / percent) * 100); // Recalculate original number
+                } else { // Revert to basic percentage for variety
+                    percent = getRandomInt(10, 90);
+                    value = getRandomInt(100, 1000);
+                    answer = (value * percent) / 100;
+                    if (answer % 1 !== 0 && answer * 2 % 1 !== 0) {
+                        answer = Math.round(answer);
+                    }
+                    questionText = `¿Cuánto es el ${percent}% de ${value}?`;
+                }
+            }
+            return { question: questionText, answer: answer };
+        }
+
+        function generateFractionQuestion(level) {
+            let num1, den1, num2, den2, operation;
+            let questionText, answer;
+
+            // Simplify fraction if possible
+            const simplifyFraction = (n, d) => {
+                const gcd = (a, b) => b === 0 ? a : gcd(b, a % b);
+                const common = gcd(n, d);
+                return [n / common, d / common];
+            };
+
+            const formatFraction = (n, d) => {
+                if (d === 1) return n.toString();
+                if (n === 0) return "0";
+                return `${n}/${d}`;
+            };
+
+            const getFractionOptions = (correctN, correctD) => {
+                let options = [];
+                let [n, d] = simplifyFraction(correctN, correctD);
+                options.push(formatFraction(n, d));
+
+                while (options.length < 4) {
+                    let wrongN, wrongD;
+                    const type = getRandomInt(0, 2); // 0: same denominator, different numerator; 1: different denominator, same numerator; 2: completely different
+                    
+                    if (type === 0 && d > 1) { // same denominator, different numerator
+                        wrongD = d;
+                        wrongN = getRandomInt(Math.max(1, n - 3), n + 3);
+                        if (wrongN === n) wrongN += (getRandomInt(0, 1) === 0 ? 1 : -1); // Ensure different
+                        if (wrongN < 0) wrongN = Math.abs(wrongN);
+                    } else if (type === 1 && n > 0) { // different denominator, same numerator
+                        wrongN = n;
+                        wrongD = getRandomInt(Math.max(2, d - 3), d + 3);
+                        if (wrongD === d) wrongD += (getRandomInt(0, 1) === 0 ? 1 : -1); // Ensure different
+                        if (wrongD < 1) wrongD = 1;
+                    } else { // completely different
+                        wrongN = getRandomInt(1, 15);
+                        wrongD = getRandomInt(2, 15);
+                    }
+
+                    let [sn, sd] = simplifyFraction(wrongN, wrongD);
+                    let formattedOption = formatFraction(sn, sd);
+                    if (!options.includes(formattedOption)) {
+                        options.push(formattedOption);
+                    }
+                }
+                return shuffleArray(options);
+            };
+
+            if (level <= 120) { // Addition/Subtraction with same denominator or simple common denominator
+                den1 = getRandomInt(2, 10);
+                den2 = den1;
+                num1 = getRandomInt(1, den1 - 1);
+                num2 = getRandomInt(1, den2 - 1);
+                operation = ['+', '-'][getRandomInt(0, 1)];
+
+                if (operation === '-') {
+                    if (num1 < num2) [num1, num2] = [num2, num1];
+                }
+
+                let answerN, answerD;
+                if (operation === '+') {
+                    answerN = num1 + num2;
+                    answerD = den1;
+                } else {
+                    answerN = num1 - num2;
+                    answerD = den1;
+                }
+                questionText = `¿Cuánto es ${num1}/${den1} ${operation} ${num2}/${den2}?`;
+                currentQuestion = { question: questionText, answer: formatFraction(answerN, answerD) };
+                options = getFractionOptions(answerN, answerD);
+
+            } else if (level <= 150) { // Multiplication/Division, different denominators
+                num1 = getRandomInt(1, 8);
+                den1 = getRandomInt(2, 10);
+                num2 = getRandomInt(1, 8);
+                den2 = getRandomInt(2, 10);
+                operation = ['*', '/'][getRandomInt(0, 1)];
+
+                let answerN, answerD;
+                if (operation === '*') {
+                    answerN = num1 * num2;
+                    answerD = den1 * den2;
+                } else { // Division (a/b) / (c/d) = a*d / b*c
+                    answerN = num1 * den2;
+                    answerD = den1 * num2;
+                }
+                questionText = `¿Cuánto es ${num1}/${den1} ${operation} ${num2}/${den2}?`;
+                currentQuestion = { question: questionText, answer: formatFraction(answerN, answerD) };
+                options = getFractionOptions(answerN, answerD);
+
+            } else { // Mixed operations, more complex denominators
+                den1 = getRandomInt(2, 12);
+                den2 = getRandomInt(2, 12);
+                num1 = getRandomInt(1, den1 * 2 - 1); // Allow improper fractions
+                num2 = getRandomInt(1, den2 * 2 - 1);
+                operation = ['+', '-', '*', '/'][getRandomInt(0, 3)];
+
+                let answerN, answerD;
+                if (operation === '+') {
+                    answerN = num1 * den2 + num2 * den1;
+                    answerD = den1 * den2;
+                } else if (operation === '-') {
+                    answerN = num1 * den2 - num2 * den1;
+                    answerD = den1 * den2;
+                } else if (operation === '*') {
+                    answerN = num1 * num2;
+                    answerD = den1 * den2;
+                } else { // Division
+                    answerN = num1 * den2;
+                    answerD = den1 * num2;
+                }
+                // Handle negative results for subtraction
+                if (answerD < 0) { answerN = -answerN; answerD = -answerD; }
+
+                questionText = `¿Cuánto es ${formatFraction(num1, den1)} ${operation} ${formatFraction(num2, den2)}?`;
+                currentQuestion = { question: questionText, answer: formatFraction(answerN, answerD) };
+                options = getFractionOptions(answerN, answerD);
+            }
+            return { question: questionText, answer: currentQuestion.answer, options: options };
+        }
+
+
+        function generateAlgebraQuestion(level) {
+            let questionText, answer;
+            let x, a, b, c;
+
+            const formatEquation = (eq) => eq.replace(/\+\-/g, '-'); // Clean up " + -" to " -"
+
+            if (level <= 200) { // Simple linear equations (e.g., x + 5 = 12, 2x = 10)
+                const type = getRandomInt(0, 3); // 0: x+a=b, 1: x-a=b, 2: a-x=b, 3: ax=b
+                x = getRandomInt(1, 20);
+                a = getRandomInt(1, 15);
+
+                if (type === 0) {
+                    b = x + a;
+                    questionText = `Si x + ${a} = ${b}, ¿cuánto vale x?`;
+                    answer = x;
+                } else if (type === 1) {
+                    b = x - a;
+                    questionText = `Si x - ${a} = ${b}, ¿cuánto vale x?`;
+                    answer = x;
+                } else if (type === 2) {
+                    b = a - x;
+                    questionText = `Si ${a} - x = ${b}, ¿cuánto vale x?`;
+                    answer = x;
+                } else { // type === 3
+                    b = x * a;
+                    questionText = `Si ${a}x = ${b}, ¿cuánto vale x?`;
+                    answer = x;
+                }
+            } else if (level <= 250) { // Two-step linear equations (e.g., 2x + 3 = 11)
+                x = getRandomInt(1, 10);
+                a = getRandomInt(2, 5); // Coefficient
+                b = getRandomInt(1, 10);
+                c = a * x + b;
+                questionText = `Si ${a}x + ${b} = ${c}, ¿cuánto vale x?`;
+                answer = x;
+            } else if (level <= 300) { // Equations with variables on both sides, simple quadratic (solve for x^2)
+                const type = getRandomInt(0, 1);
+                if (type === 0) { // Variables on both sides
+                    x = getRandomInt(1, 8);
+                    a = getRandomInt(2, 6);
+                    b = getRandomInt(1, 5);
+                    c = getRandomInt(1, 4);
+                    const d = a * x + b - c * x; // ax + b = cx + d
+                    questionText = `Si ${a}x + ${b} = ${c}x + ${d}, ¿cuánto vale x?`;
+                    answer = x;
+                } else { // Simple quadratic: x^2 = C
+                    x = getRandomInt(2, 10);
+                    c = x * x;
+                    questionText = `Si x² = ${c}, ¿cuánto vale x? (Solo valor positivo)`;
+                    answer = x;
+                }
+            } else { // More complex linear, basic inequalities, simple systems
+                const type = getRandomInt(0, 2);
+                if (type === 0) { // Linear equation with parentheses
+                    x = getRandomInt(1, 7);
+                    a = getRandomInt(2, 4);
+                    b = getRandomInt(1, 5);
+                    c = getRandomInt(1, 3);
+                    const result = a * (x + b) - c;
+                    questionText = `Si ${a}(x + ${b}) - ${c} = ${result}, ¿cuánto vale x?`;
+                    answer = x;
+                } else if (type === 1) { // Simple inequality (solve for x)
+                    x = getRandomInt(1, 10);
+                    a = getRandomInt(2, 5);
+                    const value = a * x + getRandomInt(1, 5);
+                    const inequalityType = getRandomInt(0, 1); // 0: <, 1: >
+                    const operator = inequalityType === 0 ? '<' : '>';
+                    const questionAnswer = inequalityType === 0 ? x - 1 : x + 1; // Example: if x > 5, then 6
+                    questionText = `Si ${a}x ${operator} ${value}, ¿cuál es el menor/mayor entero posible para x?`;
+                    answer = inequalityType === 0 ? Math.ceil((value - 1) / a) : Math.floor((value + 1) / a);
+                    if (a*answer >= value && inequalityType === 0) { // ensure correct integer for <
+                        answer--;
+                    }
+                    if (a*answer <= value && inequalityType === 1) { // ensure correct integer for >
+                        answer++;
+                    }
+                } else { // Basic system of equations (easy to solve by substitution)
+                    x = getRandomInt(1, 5);
+                    let y = getRandomInt(1, 5);
+                    let eq1 = `x + y = ${x + y}`;
+                    let eq2 = `x - y = ${x - y}`;
+                    // Randomly ask for x or y
+                    if (getRandomInt(0,1) === 0) {
+                        questionText = `Si ${eq1} y ${eq2}, ¿cuánto vale x?`;
+                        answer = x;
+                    } else {
+                        questionText = `Si ${eq1} y ${eq2}, ¿cuánto vale y?`;
+                        answer = y;
+                    }
+                }
+            }
+            return { question: formatEquation(questionText), answer: answer };
+        }
+
+        function generateGeometryQuestion(level) {
+            let questionText, answer;
+
+            if (level <= 350) { // Area of simple shapes (rectangle, square)
+                const type = getRandomInt(0, 1); // 0: rectangle, 1: square
+                if (type === 0) {
+                    const length = getRandomInt(5, 20);
+                    const width = getRandomInt(3, 15);
+                    questionText = `Un rectángulo tiene ${length} cm de largo y ${width} cm de ancho. ¿Cuál es su área en cm²?`;
+                    answer = length * width;
+                } else {
+                    const side = getRandomInt(4, 15);
+                    questionText = `Un cuadrado tiene un lado de ${side} cm. ¿Cuál es su área en cm²?`;
+                    answer = side * side;
+                }
+            } else if (level <= 400) { // Perimeter, Area of triangle/circle (using PI=3 for simplicity)
+                const type = getRandomInt(0, 2); // 0: perimeter, 1: triangle area, 2: circle area
+                if (type === 0) {
+                    const side1 = getRandomInt(5, 15);
+                    const side2 = getRandomInt(5, 15);
+                    const side3 = getRandomInt(5, 15);
+                    questionText = `Un triángulo tiene lados de ${side1} cm, ${side2} cm y ${side3} cm. ¿Cuál es su perímetro en cm?`;
+                    answer = side1 + side2 + side3;
+                } else if (type === 1) {
+                    const base = getRandomInt(6, 20);
+                    const height = getRandomInt(4, 15);
+                    questionText = `Un triángulo tiene una base de ${base} cm y una altura de ${height} cm. ¿Cuál es su área en cm²?`;
+                    answer = (base * height) / 2;
+                } else { // Circle area
+                    const radius = getRandomInt(3, 10);
+                    questionText = `Un círculo tiene un radio de ${radius} cm. Usando π≈3, ¿cuál es su área aproximada en cm²?`;
+                    answer = 3 * radius * radius; // Use simple PI=3
+                }
+            } else { // Volume of simple solids (cube, rectangular prism), basic angle properties
+                const type = getRandomInt(0, 2); // 0: cube volume, 1: rectangular prism volume, 2: angles
+                if (type === 0) {
+                    const side = getRandomInt(2, 7);
+                    questionText = `Un cubo tiene un lado de ${side} cm. ¿Cuál es su volumen en cm³?`;
+                    answer = side * side * side;
+                } else if (type === 1) {
+                    const l = getRandomInt(3, 10);
+                    const w = getRandomInt(2, 8);
+                    const h = getRandomInt(2, 6);
+                    questionText = `Un prisma rectangular tiene ${l} cm de largo, ${w} cm de ancho y ${h} cm de alto. ¿Cuál es su volumen en cm³?`;
+                    answer = l * w * h;
+                } else { // Angle properties (e.g., sum of angles in a triangle, complementary/supplementary)
+                    const angleType = getRandomInt(0, 1); // 0: triangle, 1: complementary/supplementary
+                    if (angleType === 0) {
+                        const angle1 = getRandomInt(30, 80);
+                        const angle2 = getRandomInt(30, 80);
+                        questionText = `Dos ángulos de un triángulo son ${angle1}° y ${angle2}°. ¿Cuánto mide el tercer ángulo en grados?`;
+                        answer = 180 - angle1 - angle2;
+                    } else {
+                        const angle = getRandomInt(10, 80);
+                        const complement = 90 - angle;
+                        const supplement = 180 - angle;
+                        if (getRandomInt(0, 1) === 0) {
+                            questionText = `¿Cuál es el complemento de un ángulo de ${angle}°?`;
+                            answer = complement;
+                        } else {
+                            questionText = `¿Cuál es el suplemento de un ángulo de ${angle}°?`;
+                            answer = supplement;
+                        }
+                    }
+                }
+            }
+            return { question: questionText, answer: answer };
+        }
+
+        function generatePreUQuestion(level) {
+            let questionText, answer;
+
+            if (level <= 450) { // Simple exponents, basic logarithms (log base 10/e), basic sequences
+                const type = getRandomInt(0, 2); // 0: exponents, 1: logarithms, 2: arithmetic sequences
+                if (type === 0) {
+                    const base = getRandomInt(2, 5);
+                    const exponent = getRandomInt(2, 4);
+                    questionText = `¿Cuánto es ${base}^${exponent}?`;
+                    answer = Math.pow(base, exponent);
+                } else if (type === 1) { // Logarithms, simple exact answers
+                    const base = [2, 3, 4, 5, 10][getRandomInt(0, 4)];
+                    const result = Math.pow(base, getRandomInt(2, 4));
+                    questionText = `¿Cuál es el logaritmo en base ${base} de ${result}?`;
+                    answer = Math.log(result) / Math.log(base);
+                } else { // Arithmetic sequence: find Nth term
+                    const a1 = getRandomInt(1, 10); // First term
+                    const d = getRandomInt(2, 5); // Common difference
+                    const n = getRandomInt(5, 15); // Nth term to find
+                    questionText = `En una progresión aritmética, el primer término es ${a1} y la diferencia común es ${d}. ¿Cuál es el término número ${n}?`;
+                    answer = a1 + (n - 1) * d;
+                }
+            } else { // More complex algebra (factoring simple expressions), probability basics
+                const type = getRandomInt(0, 1); // 0: factoring, 1: probability
+                if (type === 0) { // Factoring simple quadratic (e.g., x^2 + ax + b = 0, find roots or factored form)
+                    const r1 = getRandomInt(1, 5);
+                    const r2 = getRandomInt(1, 5);
+                    const a = r1 + r2;
+                    const b = r1 * r2;
+                    questionText = `Si (x+${r1})(x+${r2}) = x² + Ax + B, ¿cuánto vale A + B?`;
+                    answer = a + b;
+                } else { // Basic probability (dice, coins)
+                    const scenario = getRandomInt(0, 1); // 0: dice, 1: coin
+                    if (scenario === 0) { // Two dice sum
+                        const targetSum = getRandomInt(2, 12);
+                        let count = 0;
+                        for (let i = 1; i <= 6; i++) {
+                            for (let j = 1; j <= 6; j++) {
+                                if (i + j === targetSum) {
+                                    count++;
+                                }
+                            }
+                        }
+                        const totalOutcomes = 36;
+                        // Simplify fraction if possible
+                        const gcd = (a, b) => b === 0 ? a : gcd(b, a % b);
+                        const common = gcd(count, totalOutcomes);
+                        questionText = `Al lanzar dos dados, ¿cuál es la probabilidad de que la suma sea ${targetSum}? (Formato: num/den)`;
+                        answer = `${count / common}/${totalOutcomes / common}`;
+                    } else { // Coin toss
+                        const numCoins = getRandomInt(1, 3);
+                        const targetHeads = getRandomInt(0, numCoins);
+                        // Calculate combinations (nCk)
+                        const nCk = (n, k) => {
+                            let res = 1;
+                            if (k < 0 || k > n) return 0;
+                            if (k === 0 || k === n) return 1;
+                            if (k > n / 2) k = n - k;
+                            for (let i = 1; i <= k; ++i) {
+                                res = res * (n - i + 1) / i;
+                            }
+                            return res;
+                        };
+                        const combinations = nCk(numCoins, targetHeads);
+                        const totalOutcomes = Math.pow(2, numCoins);
+                        const gcd = (a, b) => b === 0 ? a : gcd(b, a % b);
+                        const common = gcd(combinations, totalOutcomes);
+                        
+                        questionText = `Al lanzar ${numCoins} moneda(s), ¿cuál es la probabilidad de obtener ${targetHeads} cara(s)? (Formato: num/den)`;
+                        answer = `${combinations / common}/${totalOutcomes / common}`;
+                    }
+                }
+            }
+            return { question: questionText, answer: answer };
+        }
+
+        // --- Funciones de Lógica del Juego ---
+
+        /**
+         * Genera una nueva pregunta matemática basada en el nivel actual.
+         */
+        function generateQuestion() {
+            let questionData;
+
+            // Reinicia el cronómetro de la pregunta
+            clearInterval(questionTimerInterval);
+            questionCurrentSeconds = 0;
+            questionChronometer.textContent = formatTime(questionCurrentSeconds); // Muestra 00:00:00
+            questionTimerInterval = setInterval(() => {
+                questionCurrentSeconds++;
+                questionChronometer.textContent = formatTime(questionCurrentSeconds);
+            }, 1000);
+
+            // Lógica de dificultad basada en el nivel
+            if (currentLevel <= 30) {
+                questionData = generateBasicArithmeticQuestion(currentLevel);
+            } else if (currentLevel <= 60) { // Niveles 31-60: Raíces exactas
+                questionData = generateRootQuestion(currentLevel);
+            } else if (currentLevel <= 90) { // Niveles 61-90: Porcentajes
+                questionData = generatePercentageQuestion(currentLevel);
+            } else if (currentLevel <= 150) { // Niveles 91-150: Fracciones
+                questionData = generateFractionQuestion(currentLevel);
+            } else if (currentLevel <= 300) { // Niveles 151-300: Álgebra (1ro-3ro secundaria)
+                questionData = generateAlgebraQuestion(currentLevel);
+            } else if (currentLevel <= 400) { // Niveles 301-400: Geometría (4to-5to secundaria)
+                questionData = generateGeometryQuestion(currentLevel);
+            } else if (currentLevel <= 500) { // Niveles 401-500: Pre-universitario (básico)
+                questionData = generatePreUQuestion(currentLevel);
+            } else { // Fallback for levels beyond defined range
+                questionData = generateBasicArithmeticQuestion(30); // Use max difficulty basic arithmetic
+            }
+            
+            questionElement.textContent = questionData.question;
+            currentQuestion = { question: questionData.question, answer: questionData.answer };
+
+            let options = questionData.options || []; // Use options from specific generators if available
+
+            if (options.length === 0) { // Generate options if not provided by specific question type
+                options.push(currentQuestion.answer);
+                while (options.length < 4) {
+                    let wrongAnswer;
+                    do {
+                        // Generate wrong answers that are close to the correct one
+                        // Adapt range based on the magnitude of the answer
+                        let range = Math.max(1, Math.floor(Math.abs(currentQuestion.answer) * 0.1)); // 10% of answer or at least 1
+                        if (typeof currentQuestion.answer === 'number' && currentQuestion.answer % 1 !== 0) { // If answer is decimal
+                             range = Math.max(0.1, Math.abs(currentQuestion.answer) * 0.05); // Smaller range for decimals
+                             wrongAnswer = (currentQuestion.answer + (Math.random() * 2 - 1) * range).toFixed(1); // One decimal place
+                             wrongAnswer = parseFloat(wrongAnswer);
+                        } else if (typeof currentQuestion.answer === 'string' && currentQuestion.answer.includes('/')) { // If answer is a fraction
+                            const [n, d] = currentQuestion.answer.split('/').map(Number);
+                            let wrongN = n + getRandomInt(-2, 2);
+                            let wrongD = d + getRandomInt(-1, 1);
+                            if (wrongD < 1) wrongD = 1;
+                            wrongAnswer = `${wrongN}/${wrongD}`;
+                            if (wrongAnswer === "0/1") wrongAnswer = "0"; // Normalize 0/1 to 0
+                        }
+                        else {
+                            wrongAnswer = currentQuestion.answer + getRandomInt(-range, range);
+                        }
+                        
+                        // Prevent 0 as wrong answer if correct answer is not 0
+                        if (wrongAnswer === 0 && currentQuestion.answer !== 0) {
+                            wrongAnswer = getRandomInt(1, 10); 
+                        }
+                        // Prevent negative options unless the answer is negative
+                        if (typeof wrongAnswer === 'number' && wrongAnswer < 0 && currentQuestion.answer >= 0) {
+                             wrongAnswer = Math.abs(wrongAnswer);
+                        }
+                        
+                    } while (options.includes(wrongAnswer) || wrongAnswer === currentQuestion.answer);
+                    options.push(wrongAnswer);
+                }
+            }
+            
+            options = shuffleArray(options);
+
+            // Rellena los botones de opciones
+            optionsContainer.innerHTML = '';
+            options.forEach(opt => {
+                const button = document.createElement('button');
+                button.classList.add('option-button');
+                button.textContent = opt;
+                button.addEventListener('click', () => checkAnswer(opt));
+                optionsContainer.appendChild(button);
+            });
+
+            // Muestra el área de la pregunta y oculta el botón del temporizador
+            questionArea.classList.remove('hidden');
+            mainTimerButton.classList.add('hidden');
+            retryButton.classList.add('hidden');
+            messageElement.textContent = "¡Rápido! Responde correctamente.";
+            playSound(challengeSound);
+        }
+
+        /**
+         * Comprueba si la respuesta seleccionada por el usuario es correcta.
+         * @param {number|string} selectedAnswer - La respuesta elegida por el usuario.
+         */
+        function checkAnswer(selectedAnswer) {
+            if (!gameActive) return; // Evita responder si el juego no está activo
+
+            clearInterval(questionTimerInterval); // Detiene el cronómetro de la pregunta inmediatamente al responder
+
+            // Normalize answers for comparison (especially for fractions, decimals)
+            let correctAnswerNormalized = typeof currentQuestion.answer === 'number' ? currentQuestion.answer : parseFloat(currentQuestion.answer);
+            let selectedAnswerNormalized = typeof selectedAnswer === 'number' ? selectedAnswer : parseFloat(selectedAnswer);
+
+            // Special handling for fraction answers (string format like "X/Y")
+            let isCorrect;
+            if (typeof currentQuestion.answer === 'string' && currentQuestion.answer.includes('/')) {
+                const simplifyFraction = (n, d) => {
+                    if (d === 0) return {n: n, d: 0}; // Handle division by zero case explicitly
+                    const gcd = (a, b) => b === 0 ? a : gcd(b, a % b);
+                    const common = gcd(n, d);
+                    return {n: n / common, d: d / common};
+                };
+                const [cN, cD] = currentQuestion.answer.split('/').map(Number);
+                const [sN, sD] = selectedAnswer.split('/').map(Number);
+                
+                const simplifiedCorrect = simplifyFraction(cN, cD);
+                const simplifiedSelected = simplifyFraction(sN, sD);
+
+                isCorrect = (simplifiedCorrect.n === simplifiedSelected.n && simplifiedCorrect.d === simplifiedSelected.d);
+
+            } else if (typeof currentQuestion.answer === 'number' && currentQuestion.answer % 1 !== 0) { // If original answer is decimal
+                isCorrect = (Math.abs(correctAnswerNormalized - selectedAnswerNormalized) < 0.001); // Tolerance for floats
+            }
+            else { // For integers and other direct comparisons
+                isCorrect = (selectedAnswer === currentQuestion.answer);
+            }
+
+            // Deshabilita los botones y da feedback visual
+            const optionButtons = optionsContainer.querySelectorAll('.option-button');
+            optionButtons.forEach(button => {
+                button.disabled = true;
+                if (button.textContent == currentQuestion.answer) { // Use loose comparison for string vs number, or specific fraction comparison
+                    button.style.backgroundColor = '#27ae60'; // Verde para correcta
+                } else if (button.textContent == selectedAnswer) {
+                    button.style.backgroundColor = '#c0392b'; // Rojo para incorrecta
+                }
+            });
+
+            // Pequeño retardo para mostrar el feedback visual antes de continuar
+            setTimeout(() => {
+                if (isCorrect) {
+                    currentScore += 10 * currentLevel; // Puntaje basado en el nivel
+                    mapPiecesFound++;
+                    revealMapPiece();
+                    playSound(correctSound);
+                    messageElement.textContent = "¡Correcto! Siguiente acertijo...";
+                    scoreDisplay.textContent = `Puntaje: ${currentScore}`;
+
+                    if (mapPiecesFound < totalMapPieces) {
+                        currentLevel++;
+                        currentLevelDisplay.textContent = `Nivel: ${currentLevel}`;
+                        // El temporizador de la pregunta se reinicia en generateQuestion()
+                        generateQuestion(); // Genera la siguiente pregunta
+                    } else {
+                        endGame(true); // ¡El jugador ha ganado!
+                    }
+                } else {
+                    playSound(wrongSound);
+                    messageElement.textContent = `¡Incorrecto! La respuesta era ${currentQuestion.answer}.`;
+                    questionElement.classList.add('shake'); // Agrega la animación de "shake"
+                    setTimeout(() => {
+                        questionElement.classList.remove('shake'); // Elimina la animación después de un tiempo
+                    }, 600); // Duración de la animación
+                    endGame(false); // El jugador ha perdido
+                }
+            }, 700); // Retardo de 0.7 segundos
+        }
+
+        /**
+         * Inicia el temporizador del juego y el flujo de preguntas.
+         */
+        function startTimer() {
+            if (gameActive) return; // Evita iniciar múltiples temporizadores
+            gameActive = true;
+            timerSeconds = 0; // Reinicia el tiempo total del juego
+            mainTimerButton.textContent = "EN JUEGO"; // Cambia el texto del botón a "EN JUEGO"
+            // REMOVED: mainTimerButton.classList.add('active-timer'); // Elimina la clase que ajusta el tamaño de fuente para el tiempo
+            mainTimerButton.classList.remove('hidden'); // Asegura que el botón sea visible
+
+            timerInterval = setInterval(() => {
+                timerSeconds++; // Sigue incrementando para el cálculo de high scores
+                // REMOVED: mainTimerButton.textContent = formatTime(timerSeconds); // Ya no se muestra el tiempo total en el botón
+                if (gameActive && !questionArea.classList.contains('hidden') && timerSeconds % 5 === 0) {
+                    playSound(tickSound);
+                }
+            }, 1000);
+
+            // Inicia la primera pregunta después de un breve retraso
+            setTimeout(() => {
+                generateQuestion();
+            }, 1500);
+        }
+
+        /**
+         * Reinicia los temporizadores del juego.
+         */
+        function resetTimers() {
+            clearInterval(timerInterval);
+            clearInterval(questionTimerInterval);
+            timerSeconds = 0;
+            questionCurrentSeconds = 0;
+            mainTimerButton.textContent = "PULSA"; // Restablece a "PULSA"
+            // REMOVED: mainTimerButton.classList.remove('active-timer'); // Asegura que la clase de tiempo no esté activa
+            questionChronometer.textContent = formatTime(questionCurrentSeconds);
+        }
+
+        /**
+         * Revela una pieza del mapa.
+         */
+        function revealMapPiece() {
+            // mapPiecesFound ya ha sido incrementado en checkAnswer
+            const piece = document.getElementById(`map-piece-${mapPiecesFound}`);
+            if (piece) {
+                piece.classList.add('revealed');
+                piece.textContent = mapPiecesFound; // Muestra el número de la pieza
+            }
+        }
+
+        /**
+         * Termina el juego, muestra el resultado y la opción de reintentar.
+         * @param {boolean} won - Verdadero si el jugador ganó, falso si perdió.
+         */
+        function endGame(won) {
+            gameActive = false;
+            clearInterval(timerInterval); // Detiene el temporizador total
+            clearInterval(questionTimerInterval); // Detiene el temporizador de la pregunta
+            optionsContainer.innerHTML = ''; // Limpia las opciones
+            questionArea.classList.add('hidden'); // Oculta el área de preguntas
+            mainTimerButton.classList.remove('hidden'); // Muestra el botón del temporizador
+            mainTimerButton.textContent = "PULSA"; // Restablece el texto a "PULSA"
+            // REMOVED: mainTimerButton.classList.add('active-timer'); // Ya no es un temporizador visible
+
+            let isNewHighScore = false;
+            // Check if current score is higher than the lowest high score or if there are less than 3 scores
+            if (highScores.length < 3 || currentScore > (highScores.length > 0 ? highScores[highScores.length - 1].score : -1)) {
+                isNewHighScore = true;
+            } else if (currentScore === (highScores.length > 0 ? highScores[highScores.length - 1].score : -1)) {
+                // If scores are equal, check time: lower time is better
+                if (timerSeconds < (highScores.length > 0 ? highScores[highScores.length - 1].time : Infinity)) {
+                    isNewHighScore = true;
+                }
+            }
+
+            if (isNewHighScore) {
+                pendingHighScoreDetails = { score: currentScore, time: timerSeconds };
+                showNicknameInputModal();
+            } else {
+                // If not a new high score, but game ended, just show retry button
+                messageElement.textContent = `¡Juego Terminado! Tu puntaje final: ${currentScore}.`;
+                retryButton.classList.remove("hidden");
+                updateHighScoresDisplay(); // Ensure high scores are updated/displayed if modal not shown
+            }
+        }
+
+        /**
+         * Actualiza la lista de puntajes altos guardados en localStorage.
+         * @param {number} score - El puntaje obtenido en la partida actual.
+         * @param {number} timeTaken - El tiempo total en segundos para lograr el puntaje.
+         * @param {string} playerName - El nombre del jugador para el puntaje alto.
+         */
+        function updateHighScores(score, timeTaken = 0, playerName = "Anónimo") {
+            highScores.push({ score: score, time: timeTaken, name: playerName });
+            
+            // Sort by score (descending), then by time (ascending) for ties
+            highScores.sort((a, b) => {
+                if (b.score !== a.score) {
+                    return b.score - a.score;
+                }
+                return a.time - b.time; // Lower time is better for equal scores
+            });
+
+            highScores = highScores.slice(0, 3); // Keep only the top 3
+            localStorage.setItem("highScores", JSON.stringify(highScores));
+            updateHighScoresDisplay();
+        }
+
+        /**
+         * Actualiza la lista de puntajes altos en la interfaz de usuario.
+         */
+        function updateHighScoresDisplay() {
+            const highScoresList = document.getElementById("high-scores-list");
+            let displayHtml = '';
+            for (let i = 0; i < 3; i++) {
+                if (highScores[i]) {
+                    displayHtml += `<li>${i + 1}. ${highScores[i].name}: ${highScores[i].score} puntos (Tiempo: ${formatTime(highScores[i].time)})</li>`;
+                } else {
+                    displayHtml += `<li>${i + 1}. Pendiente</li>`; // Display "Pendiente" for empty slots
+                }
+            }
+            highScoresList.innerHTML = displayHtml;
+        }
+
+        /**
+         * Muestra la pantalla de felicitación por un puntaje alto.
+         * @param {string} playerName - El nombre del jugador.
+         */
+        function showHighScoreSplash(playerName) {
+            gameContainer.classList.remove('show');
+            gameContainer.classList.add('hidden');
+            highScoreSplashScreen.classList.remove('hidden');
+            highScoreSplashScreen.classList.add('show');
+            highScoreMessage.textContent = `¡Felicidades, ${playerName}! Jason Dafnis te felicita por esta hazaña.`;
+            playSound(winSound); // Reproducir sonido de victoria para el high score
+        }
+
+        /**
+         * Reinicia el juego a su estado inicial.
+         */
+        function resetGame() {
+            mapPiecesFound = 0;
+            currentScore = 0;
+            currentLevel = 1;
+            scoreDisplay.textContent = `Puntaje: ${currentScore}`;
+            currentLevelDisplay.textContent = `Nivel: ${currentLevel}`;
+            messageElement.textContent = "¡Pulsa el cronómetro para iniciar el acertijo!";
+            mainTimerButton.textContent = "PULSA"; // Establece el texto inicial a "PULSA"
+            // REMOVED: mainTimerButton.classList.remove('active-timer'); // Asegura que la clase de tiempo no esté activa
+            questionChronometer.textContent = "00:00:00"; // Reinicia el cronómetro de la pregunta
+            questionArea.classList.add("hidden");
+            retryButton.classList.add("hidden");
+            mainTimerButton.classList.remove('hidden'); // Asegura que el botón del temporizador esté visible para iniciar
+            gameActive = false; // Reinicia el estado del juego
+            resetTimers(); // Asegura que no haya temporizadores corriendo
+
+            pendingHighScoreDetails = null; // Clear pending high score details
+
+            // Regenera las piezas del mapa para el nuevo total de niveles
+            mapPiecesContainer.innerHTML = '';
+            for (let i = 1; i <= totalMapPieces; i++) {
+                const piece = document.createElement('div');
+                piece.classList.add('map-piece');
+                piece.id = `map-piece-${i}`;
+                piece.textContent = '?';
+                mapPiecesContainer.appendChild(piece);
+            }
+            updateHighScoresDisplay(); // Actualiza la visualización de los puntajes al reiniciar
+            highScoreSplashScreen.classList.add('hidden'); // Asegura que el splash de high score esté oculto
+            gameContainer.classList.remove('hidden'); // Asegura que el contenedor del juego esté visible
+            gameContainer.classList.add('show'); // Asegura que el contenedor del juego esté visible
+        }
+
+        // --- Nickname Input Functions ---
+
+        function showNicknameInputModal() {
+            nicknameInputModal.style.display = 'flex';
+            nicknameInputField.value = ''; // Clear previous input
+            nicknameInputField.focus(); // Focus the input field
+        }
+
+        function hideNicknameInputModal() {
+            nicknameInputModal.style.display = 'none';
+        }
+
+        function handleNicknameInput(key) {
+            let currentNickname = nicknameInputField.value;
+            const maxLength = nicknameInputField.maxLength;
+
+            if (key === 'BORRAR') { // Changed to 'BORRAR' to match button text
+                nicknameInputField.value = currentNickname.slice(0, -1);
+            } else if (key === 'ESPACIO') { // Changed to 'ESPACIO'
+                 if (currentNickname.length < maxLength) {
+                    nicknameInputField.value += ' ';
+                }
+            }
+            else {
+                if (currentNickname.length < maxLength) {
+                    nicknameInputField.value += key;
+                }
+            }
+        }
+
+        function processNickname() {
+            const nickname = nicknameInputField.value.trim().toUpperCase();
+            if (nickname === "") {
+                alert("Por favor, introduce un Nickname válido.");
+                return;
+            }
+
+            hideNicknameInputModal();
+            if (pendingHighScoreDetails) {
+                updateHighScores(pendingHighScoreDetails.score, pendingHighScoreDetails.time, nickname);
+                showHighScoreSplash(nickname);
+            } else {
+                // Should not happen if logic is correct
+                console.error("No hay detalles de puntaje alto pendientes.");
+                retryButton.classList.remove("hidden"); // Fallback
+            }
+        }
+
+        function cancelNicknameInput() {
+            hideNicknameInputModal();
+            // If the user cancels, treat it as if no nickname was entered for the high score.
+            // Still update high scores with a generic name if it met the criteria, but don't show specific splash.
+            if (pendingHighScoreDetails) {
+                updateHighScores(pendingHighScoreDetails.score, pendingHighScoreDetails.time, "Jugador");
+            }
+            messageElement.textContent = `¡Juego Terminado! Tu puntaje final: ${currentScore}.`;
+            retryButton.classList.remove("hidden");
+        }
+
+
+        // --- Event Listeners y Configuración Inicial ---
+
+        // Se ejecuta cuando el DOM está completamente cargado
+        document.addEventListener('DOMContentLoaded', () => {
+            // Muestra el splash screen al cargar
+            splashScreen.style.display = 'flex';
+
+            // Oculta el splash screen después de 3 segundos o al hacer clic
+            const hideSplashScreen = () => {
+                splashScreen.classList.add('fadeOut');
+                gameContainer.classList.add('show'); // Muestra el contenedor del juego
+                setTimeout(() => {
+                    splashScreen.style.display = 'none';
+                    gameTitle.classList.add('hidden'); // Oculta el título del juego principal
+                }, 500); // Coincide con la duración de la animación fadeOut
+            };
+
+            // Ocultar splash screen después de 3 segundos
+            setTimeout(hideSplashScreen, 3000); 
+
+            // Ocultar splash screen al hacer clic/tocar en cualquier parte
+            splashScreen.addEventListener('click', hideSplashScreen);
+            splashScreen.addEventListener('touchstart', hideSplashScreen); // Para dispositivos táctiles
+
+            resetGame(); // Establece el juego en su estado inicial
+        });
+
+        // Manejador de clic para el botón principal del temporizador
+        mainTimerButton.addEventListener('click', () => {
+            if (!gameActive) {
+                resetGame(); // Reinicia el juego antes de iniciar uno nuevo
+                startTimer(); // Inicia el temporador y el juego
+            }
+        });
+
+        // Manejador de clic para el botón de reintentar
+        retryButton.addEventListener("click", () => {
+            resetGame(); // Reinicia el juego
+        });
+
+        // Manejador de clic para el botón "Volver a Jugar" en el splash de puntaje alto
+        playAgainButton.addEventListener("click", () => {
+            resetGame(); // Reinicia el juego
+        });
+
+        // Manejo de modales
+        highScoresToggle.addEventListener('click', () => {
+            highScoresModal.style.display = 'flex';
+        });
+
+        closeHighScores.addEventListener('click', () => {
+            highScoresModal.style.display = 'none';
+        });
+
+        mapToggle.addEventListener('click', () => {
+            mapModal.style.display = 'flex';
+        });
+
+        closeMapModal.addEventListener('click', () => {
+            mapModal.style.display = 'none';
+        });
+
+        // Cerrar modales al hacer clic fuera de ellos
+        window.addEventListener('click', (event) => {
+            if (event.target == highScoresModal) {
+                highScoresModal.style.display = 'none';
+            }
+            if (event.target == mapModal) {
+                mapModal.style.display = 'none';
+            }
+        });
+
+        // Virtual Keyboard Event Listeners
+        keyboardContainer.addEventListener('click', (event) => {
+            if (event.target.classList.contains('keyboard-button')) {
+                const key = event.target.textContent;
+                handleNicknameInput(key);
+            }
+        });
+
+        confirmNicknameButton.addEventListener('click', processNickname);
+        cancelNicknameButton.addEventListener('click', cancelNicknameInput);
+
+        // Allow 'Enter' key press to confirm nickname
+        nicknameInputField.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                processNickname();
+            }
+        });
+        
+        // Disable real keyboard input for nickname field (already readonly, but good practice)
+        nicknameInputField.addEventListener('keydown', (event) => {
+            event.preventDefault(); // Prevent default key actions
+        });
+        nicknameInputField.addEventListener('paste', (event) => {
+            event.preventDefault(); // Prevent pasting
+        });
+
+    </script>
+</body>
+</html>
