@@ -337,7 +337,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            font-family: 'Press Start +2P', cursive, sans-serif;
+            font-family: 'Press Start 2P', cursive, sans-serif;
             font-size: 1.5em; /* Fuente más pequeña */
             cursor: pointer;
             box-shadow: 0 3px 10px rgba(0, 0, 0, 0.5);
@@ -359,15 +359,11 @@
         }
 
         #credits-toggle {
-            bottom: 60px; /* Posicionado encima de los otros botones para evitar superposición */
-            left: 8px; /* Alineado con el botón de mapa */
-            background-color: #2ecc71; /* Un color diferente para los créditos */
-            color: #2c3e50;
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: 8px;
         }
 
-        #credits-toggle:hover {
-            background-color: #27ae60;
-        }
 
         /* Modal de información */
         .modal {
@@ -428,6 +424,21 @@
             color: #f1c40f;
             font-size: clamp(1em, 3.5vw, 1.6em); /* Fuente más pequeña */
             margin-bottom: 12px; /* Margen reducido */
+        }
+
+        .modal-content .credits-title {
+            color: #f1c40f; /* Usar el color amarillo para el título de créditos */
+            font-size: clamp(0.9em, 3.2vw, 1.4em);
+            margin-top: 15px;
+            margin-bottom: 8px;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7);
+        }
+
+        .modal-content .credits-text {
+            color: #ecf0f1;
+            font-size: clamp(0.7em, 2.5vw, 1.1em);
+            margin-bottom: 5px;
+            text-align: center;
         }
 
         ul#high-scores-list {
@@ -513,26 +524,6 @@
             animation: shake 0.3s ease-in-out 2;
         }
 
-        /* Credits Modal specific styles */
-        #credits-modal h2 {
-            color: #2ecc71; /* Green title for credits */
-        }
-        #credits-modal p {
-            font-size: clamp(0.8em, 2.5vw, 1.1em);
-            color: #ecf0f1;
-            margin-bottom: 10px;
-            line-height: 1.4;
-            text-align: center;
-        }
-        #credits-modal .quote {
-            font-style: italic;
-            margin-top: 15px;
-            padding: 8px;
-            border: 1px dashed #f1c40f;
-            border-radius: 5px;
-            background-color: rgba(0, 0, 0, 0.2);
-        }
-
         /* Media queries para ajustes finos en pantallas más grandes */
         @media (min-width: 600px) {
             #options-container {
@@ -545,16 +536,10 @@
                 font-size: 1.7em;
                 bottom: 12px;
             }
-            #high-scores-toggle {
-                right: 12px;
-            }
-            #map-toggle {
-                left: 12px;
-            }
-            #credits-toggle {
-                bottom: 70px; /* Adjusted for larger screen buttons */
-                left: 12px;
-            }
+            #high-scores-toggle { right: 12px; }
+            #map-toggle { left: 12px; }
+            #credits-toggle { bottom: 12px; } /* Adjust for consistency */
+
             .modal-content {
                 padding: 25px;
             }
@@ -719,6 +704,10 @@
 
     <div id="high-scores-toggle" class="info-button">⭐</div>
 
+    <div id="map-toggle" class="info-button">🗺️</div>
+
+    <div id="credits-toggle" class="info-button">ⓘ</div>
+
     <div id="high-scores-modal" class="modal">
         <div class="modal-content">
             <span class="close-button" id="close-high-scores">&times;</span>
@@ -726,8 +715,6 @@
             <ul id="high-scores-list"></ul>
         </div>
     </div>
-
-    <div id="map-toggle" class="info-button">🗺️</div>
 
     <div id="map-modal" class="modal">
         <div class="modal-content">
@@ -737,16 +724,13 @@
         </div>
     </div>
 
-    <div id="credits-toggle" class="info-button">ℹ️</div>
-
     <div id="credits-modal" class="modal">
         <div class="modal-content">
             <span class="close-button" id="close-credits-modal">&times;</span>
-            <h2>Créditos</h2>
-            <p><strong>Equipo de Desarrollo:</strong></p>
-            <p><strong>Creador y Programador:</strong> Jason Dafnis</p>
-            <p><strong>Tester y Primer Jugador:</strong> Liam Santiago</p>
-            <p class="quote">"Situaciones desesperadas, medidas desesperadas..."</p>
+            <h2 class="credits-title">EQUIPO DE DESARROLLO</h2>
+            <p class="credits-text">Desarrollo y programación: Jason Dafnis.</p>
+            <p class="credits-text">Tester y primer jugador: Liam Santiago.</p>
+            <p class="credits-text" style="margin-top: 15px;">"La matemática puede ser un desafío, pero la mejor inspiración a veces surge del deseo de hacerla divertida para todos."</p>
         </div>
     </div>
 
@@ -833,9 +817,11 @@
         const mapModal = document.getElementById('map-modal');
         const closeMapModal = document.getElementById('close-map-modal');
 
+        // Nuevos elementos para créditos
         const creditsToggle = document.getElementById('credits-toggle');
         const creditsModal = document.getElementById('credits-modal');
         const closeCreditsModal = document.getElementById('close-credits-modal');
+
 
         const splashScreen = document.getElementById('splash-screen');
         const highScoreSplashScreen = document.getElementById('high-score-splash');
@@ -858,7 +844,7 @@
         let highScores = JSON.parse(localStorage.getItem("highScores")) || [];
         let currentQuestion = {};
         let mapPiecesFound = 0;
-        const totalMapPieces = 200; // Adjusted to 200 levels
+        const totalMapPieces = 30; // ¡Cambiado a 30 para 30 niveles!
         let timerSeconds = 0; // Tiempo total de la partida (se sigue registrando para puntajes altos, pero no se muestra en mainTimerButton)
         let timerInterval; // Intervalo para el tiempo total de la partida
         let questionCurrentSeconds = 0; // Nuevo: tiempo para la pregunta actual
@@ -919,393 +905,13 @@
             audioElement.play().catch(e => console.error("Error al reproducir el sonido:", e));
         }
 
-        // --- Funciones de Generación de Preguntas por Tipo ---
-
-        function generateBasicArithmeticQuestion(level) {
-            let num1, num2, operation, answer;
-            let questionText;
-
-            // Adjusted ranges for 200 levels
-            if (level <= 10) { // Basic operations with smaller numbers
-                num1 = getRandomInt(1, 15);
-                num2 = getRandomInt(1, 15);
-                operation = ['+', '-'][getRandomInt(0, 1)]; // Focus on addition/subtraction
-            } else { // Levels 11-20: Includes multiplication/division, slightly larger numbers
-                num1 = getRandomInt(5, 30);
-                num2 = getRandomInt(2, 15);
-                operation = ['+', '-', '*', '/'][getRandomInt(0, 3)];
-            }
-
-            if (operation === '/') {
-                num1 = num2 * getRandomInt(1, 10); // Ensure exact division
-            } else if (operation === '-' && num1 < num2) {
-                [num1, num2] = [num2, num1]; // Ensure positive result
-            }
-            
-            switch (operation) {
-                case '+': answer = num1 + num2; break;
-                case '-': answer = num1 - num2; break;
-                case '*': answer = num1 * num2; break;
-                case '/': answer = num1 / num2; break;
-            }
-            questionText = `¿Cuánto es ${num1} ${operation} ${num2}?`;
-            return { question: questionText, answer: answer };
-        }
-
-        function generateRootQuestion(level) {
-            let base, answer;
-            let questionText;
-            const roots = [2, 3]; // Square, cube roots
-
-            // Adjusted ranges for 200 levels
-            if (level <= 30) { // Levels 21-30: Square roots of perfect squares up to 144
-                answer = getRandomInt(2, 12);
-                base = answer * answer;
-                questionText = `¿Cuál es la raíz cuadrada de ${base}?`;
-            } else { // Levels 31-40: Include cube roots up to 125, larger square roots
-                if (Math.random() < 0.7) { // More square roots
-                    answer = getRandomInt(8, 18);
-                    base = answer * answer;
-                    questionText = `¿Cuál es la raíz cuadrada de ${base}?`;
-                } else {
-                    answer = getRandomInt(2, 5); // 2^3=8, 3^3=27, 4^3=64, 5^3=125
-                    base = answer * answer * answer;
-                    questionText = `¿Cuál es la raíz cúbica de ${base}?`;
-                }
-            }
-            return { question: questionText, answer: answer };
-        }
-
-        function generatePercentageQuestion(level) {
-            let value, percent, answer;
-            let questionText;
-
-            // Adjusted ranges for 200 levels
-            if (level <= 50) { // Levels 41-50: Basic percentages (10%, 20%, 50%, 25%, 75%) of multiples of 10 or 100
-                percent = [10, 20, 25, 50, 75][getRandomInt(0, 4)];
-                value = getRandomInt(1, 15) * (percent === 25 || percent === 75 ? 40 : 10); // Ensure easy calculation
-                answer = (value * percent) / 100;
-                questionText = `¿Cuánto es el ${percent}% de ${value}?`;
-            } else { // Levels 51-60: Any percentage of a number, finding the original number or percentage
-                const type = getRandomInt(0, 2); // 0: find percent, 1: find original number, 2: basic (revisit)
-                if (type === 0) { // What percentage is X of Y?
-                    value = getRandomInt(20, 150);
-                    answer = getRandomInt(10, 90);
-                    const part = Math.round((value * answer) / 100);
-                    questionText = `¿Qué porcentaje es ${part} de ${value}?`;
-                    answer = Math.round((part / value) * 100);
-                } else if (type === 1) { // If X is Y%, what is the original number?
-                    percent = getRandomInt(10, 80);
-                    answer = getRandomInt(50, 200);
-                    const part = Math.round((answer * percent) / 100);
-                    questionText = `Si ${part} es el ${percent}% de un número, ¿cuál es el número?`;
-                    answer = Math.round((part / percent) * 100);
-                } else { // Basic percentage for variety
-                    percent = getRandomInt(10, 90);
-                    value = getRandomInt(50, 500);
-                    answer = (value * percent) / 100;
-                    if (answer % 1 !== 0 && answer * 2 % 1 !== 0) {
-                        answer = Math.round(answer);
-                    }
-                    questionText = `¿Cuánto es el ${percent}% de ${value}?`;
-                }
-            }
-            return { question: questionText, answer: answer };
-        }
-
-        function generateFractionQuestion(level) {
-            let num1, den1, num2, den2, operation;
-            let questionText, answer;
-
-            // Simplify fraction if possible
-            const simplifyFraction = (n, d) => {
-                const gcd = (a, b) => b === 0 ? a : gcd(b, a % b);
-                const common = gcd(n, d);
-                return [n / common, d / common];
-            };
-
-            const formatFraction = (n, d) => {
-                if (d === 1) return n.toString();
-                if (n === 0) return "0";
-                return `${n}/${d}`;
-            };
-
-            const getFractionOptions = (correctN, correctD) => {
-                let options = [];
-                let [n, d] = simplifyFraction(correctN, correctD);
-                options.push(formatFraction(n, d));
-
-                while (options.length < 4) {
-                    let wrongN, wrongD;
-                    const type = getRandomInt(0, 2); // 0: same denominator, different numerator; 1: different denominator, same numerator; 2: completely different
-                    
-                    if (type === 0 && d > 1) { // same denominator, different numerator
-                        wrongD = d;
-                        wrongN = getRandomInt(Math.max(1, n - 2), n + 2);
-                        if (wrongN === n) wrongN += (getRandomInt(0, 1) === 0 ? 1 : -1);
-                        if (wrongN < 0) wrongN = Math.abs(wrongN);
-                    } else if (type === 1 && n > 0) { // different denominator, same numerator
-                        wrongN = n;
-                        wrongD = getRandomInt(Math.max(2, d - 2), d + 2);
-                        if (wrongD === d) wrongD += (getRandomInt(0, 1) === 0 ? 1 : -1);
-                        if (wrongD < 1) wrongD = 1;
-                    } else { // completely different
-                        wrongN = getRandomInt(1, 10);
-                        wrongD = getRandomInt(2, 10);
-                    }
-
-                    let [sn, sd] = simplifyFraction(wrongN, wrongD);
-                    let formattedOption = formatFraction(sn, sd);
-                    if (!options.includes(formattedOption)) {
-                        options.push(formattedOption);
-                    }
-                }
-                return shuffleArray(options);
-            };
-
-            // Adjusted ranges for 200 levels
-            if (level <= 80) { // Levels 61-80: Addition/Subtraction with same denominator or simple common denominator
-                den1 = getRandomInt(2, 8);
-                den2 = den1;
-                num1 = getRandomInt(1, den1 - 1);
-                num2 = getRandomInt(1, den2 - 1);
-                operation = ['+', '-'][getRandomInt(0, 1)];
-
-                if (operation === '-') {
-                    if (num1 < num2) [num1, num2] = [num2, num1];
-                }
-
-                let answerN, answerD;
-                if (operation === '+') {
-                    answerN = num1 + num2;
-                    answerD = den1;
-                } else {
-                    answerN = num1 - num2;
-                    answerD = den1;
-                }
-                questionText = `¿Cuánto es ${num1}/${den1} ${operation} ${num2}/${den2}?`;
-                currentQuestion = { question: questionText, answer: formatFraction(answerN, answerD) };
-                options = getFractionOptions(answerN, answerD);
-
-            } else { // Levels 81-100: Multiplication/Division, different denominators, simple mixed operations
-                const operationType = getRandomInt(0, 2); // 0: Multiply, 1: Divide, 2: Add/Sub with different denominators
-                num1 = getRandomInt(1, 6);
-                den1 = getRandomInt(2, 8);
-                num2 = getRandomInt(1, 6);
-                den2 = getRandomInt(2, 8);
-
-                let answerN, answerD;
-
-                if (operationType === 0) { // Multiplication
-                    operation = '*';
-                    answerN = num1 * num2;
-                    answerD = den1 * den2;
-                } else if (operationType === 1) { // Division
-                    operation = '/';
-                    answerN = num1 * den2;
-                    answerD = den1 * num2;
-                } else { // Add/Sub with different denominators (LCM small)
-                    operation = ['+', '-'][getRandomInt(0, 1)];
-                    // Ensure small LCM
-                    const commonDenominators = [4, 6, 8, 9, 10, 12];
-                    den1 = commonDenominators[getRandomInt(0, commonDenominators.length - 1)];
-                    den2 = commonDenominators[getRandomInt(0, commonDenominators.length - 1)];
-                    num1 = getRandomInt(1, den1 - 1);
-                    num2 = getRandomInt(1, den2 - 1);
-
-                    if (operation === '+') {
-                        answerN = num1 * den2 + num2 * den1;
-                        answerD = den1 * den2;
-                    } else {
-                        answerN = num1 * den2 - num2 * den1;
-                        answerD = den1 * den2;
-                    }
-                     if (answerD < 0) { answerN = -answerN; answerD = -answerD; }
-                }
-                questionText = `¿Cuánto es ${formatFraction(num1, den1)} ${operation} ${formatFraction(num2, den2)}?`;
-                currentQuestion = { question: questionText, answer: formatFraction(answerN, answerD) };
-                options = getFractionOptions(answerN, answerD);
-            }
-            return { question: questionText, answer: currentQuestion.answer, options: options };
-        }
-
-
-        function generateAlgebraQuestion(level) {
-            let questionText, answer;
-            let x, a, b, c;
-
-            const formatEquation = (eq) => eq.replace(/\+\-/g, '-');
-
-            // Adjusted ranges for 200 levels
-            if (level <= 125) { // Levels 101-125: Simple linear equations (x + a = b, ax = b, 2x + 3 = 11)
-                const type = getRandomInt(0, 1); // 0: x + a = b or ax = b, 1: 2-step
-                if (type === 0) {
-                    x = getRandomInt(1, 15);
-                    a = getRandomInt(1, 10);
-                    if (getRandomInt(0,1) === 0) { // Addition/Subtraction
-                        const operation = ['+', '-'][getRandomInt(0,1)];
-                        const val = operation === '+' ? x + a : x - a;
-                        questionText = `Si x ${operation} ${a} = ${val}, ¿cuánto vale x?`;
-                        answer = x;
-                    } else { // Multiplication
-                        const val = x * a;
-                        questionText = `Si ${a}x = ${val}, ¿cuánto vale x?`;
-                        answer = x;
-                    }
-                } else { // Two-step linear equations
-                    x = getRandomInt(1, 8);
-                    a = getRandomInt(2, 4);
-                    b = getRandomInt(1, 8);
-                    c = a * x + b;
-                    questionText = `Si ${a}x + ${b} = ${c}, ¿cuánto vale x?`;
-                    answer = x;
-                }
-            } else if (level <= 150) { // Levels 126-150: Equations with variables on both sides, simple quadratic (x^2 = C)
-                const type = getRandomInt(0, 1);
-                if (type === 0) { // Variables on both sides
-                    x = getRandomInt(1, 6);
-                    a = getRandomInt(2, 5);
-                    b = getRandomInt(1, 6);
-                    c = getRandomInt(1, 3);
-                    const d = a * x + b - c * x;
-                    questionText = `Si ${a}x + ${b} = ${c}x + ${d}, ¿cuánto vale x?`;
-                    answer = x;
-                } else { // Simple quadratic: x^2 = C
-                    x = getRandomInt(2, 9);
-                    c = x * x;
-                    questionText = `Si x² = ${c}, ¿cuánto vale x? (Solo valor positivo)`;
-                    answer = x;
-                }
-            }
-            return { question: formatEquation(questionText), answer: answer };
-        }
-
-        function generateGeometryQuestion(level) {
-            let questionText, answer;
-
-            // Adjusted ranges for 200 levels
-            if (level <= 165) { // Levels 151-165: Area of simple shapes (rectangle, square, triangle)
-                const type = getRandomInt(0, 2); // 0: rectangle, 1: square, 2: triangle
-                if (type === 0) {
-                    const length = getRandomInt(4, 15);
-                    const width = getRandomInt(3, 10);
-                    questionText = `Un rectángulo tiene ${length} cm de largo y ${width} cm de ancho. ¿Cuál es su área en cm²?`;
-                    answer = length * width;
-                } else if (type === 1) {
-                    const side = getRandomInt(3, 10);
-                    questionText = `Un cuadrado tiene un lado de ${side} cm. ¿Cuál es su área en cm²?`;
-                    answer = side * side;
-                } else { // Triangle area
-                    const base = getRandomInt(4, 16);
-                    const height = getRandomInt(3, 12);
-                    questionText = `Un triángulo tiene una base de ${base} cm y una altura de ${height} cm. ¿Cuál es su área en cm²?`;
-                    answer = (base * height) / 2;
-                }
-            } else { // Levels 166-180: Perimeter, simple volume, basic angle properties (triangle sum, complementary/supplementary)
-                const type = getRandomInt(0, 2); // 0: perimeter, 1: cube/prism volume, 2: angles
-                if (type === 0) {
-                    const side1 = getRandomInt(4, 10);
-                    const side2 = getRandomInt(4, 10);
-                    const side3 = getRandomInt(4, 10);
-                    questionText = `Un triángulo tiene lados de ${side1} cm, ${side2} cm y ${side3} cm. ¿Cuál es su perímetro en cm?`;
-                    answer = side1 + side2 + side3;
-                } else if (type === 1) {
-                    const solidType = getRandomInt(0, 1); // 0: cube, 1: rectangular prism
-                    if (solidType === 0) {
-                        const side = getRandomInt(2, 5);
-                        questionText = `Un cubo tiene un lado de ${side} cm. ¿Cuál es su volumen en cm³?`;
-                        answer = side * side * side;
-                    } else {
-                        const l = getRandomInt(2, 8);
-                        const w = getRandomInt(2, 6);
-                        const h = getRandomInt(2, 5);
-                        questionText = `Un prisma rectangular tiene ${l} cm de largo, ${w} cm de ancho y ${h} cm de alto. ¿Cuál es su volumen en cm³?`;
-                        answer = l * w * h;
-                    }
-                } else { // Angle properties
-                    const angleType = getRandomInt(0, 1); // 0: triangle, 1: complementary/supplementary
-                    if (angleType === 0) {
-                        const angle1 = getRandomInt(30, 70);
-                        const angle2 = getRandomInt(30, 70);
-                        questionText = `Dos ángulos de un triángulo son ${angle1}° y ${angle2}°. ¿Cuánto mide el tercer ángulo en grados?`;
-                        answer = 180 - angle1 - angle2;
-                    } else {
-                        const angle = getRandomInt(10, 80);
-                        if (getRandomInt(0, 1) === 0) {
-                            questionText = `¿Cuál es el complemento de un ángulo de ${angle}°?`;
-                            answer = 90 - angle;
-                        } else {
-                            questionText = `¿Cuál es el suplemento de un ángulo de ${angle}°?`;
-                            answer = 180 - angle;
-                        }
-                    }
-                }
-            }
-            return { question: questionText, answer: answer };
-        }
-
-        function generatePreUQuestion(level) {
-            let questionText, answer;
-
-            // Adjusted ranges for 200 levels
-            // Levels 181-200: Simple exponents, basic logarithms, basic sequences, simple probability
-            const type = getRandomInt(0, 3); // 0: exponents, 1: logarithms, 2: arithmetic sequences, 3: probability
-            if (type === 0) {
-                const base = getRandomInt(2, 4);
-                const exponent = getRandomInt(2, 3);
-                questionText = `¿Cuánto es ${base}^${exponent}?`;
-                answer = Math.pow(base, exponent);
-            } else if (type === 1) { // Logarithms, simple exact answers
-                const base = [2, 3, 4, 5][getRandomInt(0, 3)];
-                const result = Math.pow(base, getRandomInt(2, 3));
-                questionText = `¿Cuál es el logaritmo en base ${base} de ${result}?`;
-                answer = Math.log(result) / Math.log(base);
-            } else if (type === 2) { // Arithmetic sequence: find Nth term
-                const a1 = getRandomInt(1, 8); // First term
-                const d = getRandomInt(2, 4); // Common difference
-                const n = getRandomInt(5, 10); // Nth term to find
-                questionText = `En una progresión aritmética, el primer término es ${a1} y la diferencia común es ${d}. ¿Cuál es el término número ${n}?`;
-                answer = a1 + (n - 1) * d;
-            } else { // Basic probability (dice, coins)
-                const scenario = getRandomInt(0, 1); // 0: dice, 1: coin
-                if (scenario === 0) { // One die probability
-                    const targetNum = getRandomInt(1, 6);
-                    questionText = `Al lanzar un dado, ¿cuál es la probabilidad de obtener un ${targetNum}? (Formato: num/den)`;
-                    answer = `1/6`;
-                    // Adjust options for dice to be 1/6, 2/6, etc.
-                } else { // Coin toss
-                    const numCoins = getRandomInt(1, 2); // 1 or 2 coins
-                    const targetHeads = getRandomInt(0, numCoins);
-                    const totalOutcomes = Math.pow(2, numCoins);
-                    
-                    const nCk = (n, k) => {
-                        let res = 1;
-                        if (k < 0 || k > n) return 0;
-                        if (k === 0 || k === n) return 1;
-                        if (k > n / 2) k = n - k;
-                        for (let i = 1; i <= k; ++i) {
-                            res = res * (n - i + 1) / i;
-                        }
-                        return res;
-                    };
-                    const combinations = nCk(numCoins, targetHeads);
-                    const gcd = (a, b) => b === 0 ? a : gcd(b, a % b);
-                    const common = gcd(combinations, totalOutcomes);
-
-                    questionText = `Al lanzar ${numCoins} moneda(s), ¿cuál es la probabilidad de obtener ${targetHeads} cara(s)? (Formato: num/den)`;
-                    answer = `${combinations / common}/${totalOutcomes / common}`;
-                }
-            }
-            return { question: questionText, answer: answer };
-        }
-
         // --- Funciones de Lógica del Juego ---
 
         /**
          * Genera una nueva pregunta matemática basada en el nivel actual.
          */
         function generateQuestion() {
-            let questionData;
+            let num1, num2, operation, answer, options = [];
 
             // Reinicia el cronómetro de la pregunta
             clearInterval(questionTimerInterval);
@@ -1316,64 +922,221 @@
                 questionChronometer.textContent = formatTime(questionCurrentSeconds);
             }, 1000);
 
-            // Lógica de dificultad basada en el nivel (AJUSTADA PARA 200 NIVELES)
-            if (currentLevel <= 20) { // Basic Arithmetic
-                questionData = generateBasicArithmeticQuestion(currentLevel);
-            } else if (currentLevel <= 40) { // Roots
-                questionData = generateRootQuestion(currentLevel);
-            } else if (currentLevel <= 60) { // Percentages
-                questionData = generatePercentageQuestion(currentLevel);
-            } else if (currentLevel <= 100) { // Fractions
-                questionData = generateFractionQuestion(currentLevel);
-            } else if (currentLevel <= 150) { // Algebra
-                questionData = generateAlgebraQuestion(currentLevel);
-            } else if (currentLevel <= 180) { // Geometry
-                questionData = generateGeometryQuestion(currentLevel);
-            } else if (currentLevel <= 200) { // Pre-universitario
-                questionData = generatePreUQuestion(currentLevel);
-            } else { // Fallback for levels beyond defined range (shouldn't happen with totalMapPieces = 200)
-                questionData = generateBasicArithmeticQuestion(1); // Default to easiest if somehow outside range
+            // Lógica de dificultad basada en el nivel
+            switch (currentLevel) {
+                case 1: // Suma y Resta básica (0-10)
+                    num1 = getRandomInt(1, 10);
+                    num2 = getRandomInt(1, 10);
+                    operation = Math.random() < 0.5 ? '+' : '-';
+                    if (operation === '-' && num1 < num2) [num1, num2] = [num2, num1];
+                    break;
+                case 2: // Suma y Resta (0-20), Multiplicación simple
+                    num1 = getRandomInt(5, 15);
+                    num2 = getRandomInt(5, 15);
+                    operation = ['+', '-', '*'][getRandomInt(0, 2)];
+                    if (operation === '-' && num1 < num2) [num1, num2] = [num2, num1];
+                    break;
+                case 3: // Suma y Resta (0-50), Multiplicación (0-10)
+                    num1 = getRandomInt(10, 25);
+                    num2 = getRandomInt(1, 10);
+                    operation = ['+', '-', '*'][getRandomInt(0, 2)];
+                    if (operation === '-' && num1 < num2) [num1, num2] = [num2, num1];
+                    break;
+                case 4: // Operaciones más complejas, introduce división
+                    num1 = getRandomInt(15, 30);
+                    num2 = getRandomInt(2, 10);
+                    operation = ['+', '-', '*', '/'][getRandomInt(0, 3)];
+                    if (operation === '/') {
+                        num1 = num2 * getRandomInt(2, 8); // Asegura que la división sea un número entero
+                    } else if (operation === '-' && num1 < num2) {
+                        [num1, num2] = [num2, num1];
+                    }
+                    break;
+                case 5:
+                case 6: // Niveles 5-6: Aumenta rangos para todas las operaciones
+                    num1 = getRandomInt(20, 40);
+                    num2 = getRandomInt(3, 12);
+                    operation = ['+', '-', '*', '/'][getRandomInt(0, 3)];
+                    if (operation === '/') {
+                        num1 = num2 * getRandomInt(2, 10);
+                    } else if (operation === '-' && num1 < num2) {
+                        [num1, num2] = [num2, num1];
+                    }
+                    break;
+                case 7:
+                case 8: // Niveles 7-8: Rangos aún mayores
+                    num1 = getRandomInt(30, 60);
+                    num2 = getRandomInt(4, 15);
+                    operation = ['+', '-', '*', '/'][getRandomInt(0, 3)];
+                    if (operation === '/') {
+                        num1 = num2 * getRandomInt(3, 12);
+                    } else if (operation === '-' && num1 < num2) {
+                        [num1, num2] = [num2, num1];
+                    }
+                    break;
+                case 9:
+                case 10: // Niveles 9-10 (Zona de puntaje alto): Multiplicaciones más grandes, divisiones más complejas
+                    num1 = getRandomInt(40, 80);
+                    num2 = getRandomInt(5, 20);
+                    operation = ['+', '-', '*', '/'][getRandomInt(0, 3)];
+                    if (operation === '/') {
+                        num1 = num2 * getRandomInt(4, 15);
+                    } else if (operation === '-' && num1 < num2) {
+                        [num1, num2] = [num2, num1];
+                    }
+                    break;
+                case 11:
+                case 12: // Niveles 11-12: Números hasta 100
+                    num1 = getRandomInt(50, 100);
+                    num2 = getRandomInt(5, 25);
+                    operation = ['+', '-', '*', '/'][getRandomInt(0, 3)];
+                    if (operation === '/') {
+                        num1 = num2 * getRandomInt(5, 20);
+                    } else if (operation === '-' && num1 < num2) {
+                        [num1, num2] = [num2, num1];
+                    }
+                    break;
+                case 13:
+                case 14: // Niveles 13-14: Multiplicaciones más grandes, divisiones con divisores más grandes
+                    num1 = getRandomInt(70, 120);
+                    num2 = getRandomInt(7, 30);
+                    operation = ['+', '-', '*', '/'][getRandomInt(0, 3)];
+                    if (operation === '/') {
+                        num1 = num2 * getRandomInt(6, 25);
+                    } else if (operation === '-' && num1 < num2) {
+                        [num1, num2] = [num2, num1];
+                    }
+                    break;
+                case 15:
+                case 16: // Niveles 15-16: Números hasta 150
+                    num1 = getRandomInt(100, 150);
+                    num2 = getRandomInt(8, 35);
+                    operation = ['+', '-', '*', '/'][getRandomInt(0, 3)];
+                    if (operation === '/') {
+                        num1 = num2 * getRandomInt(7, 30);
+                    } else if (operation === '-' && num1 < num2) {
+                        [num1, num2] = [num2, num1];
+                    }
+                    break;
+                case 17:
+                case 18: // Niveles 17-18: Multiplicaciones y divisiones con números más grandes
+                    num1 = getRandomInt(120, 180);
+                    num2 = getRandomInt(10, 40);
+                    operation = ['+', '-', '*', '/'][getRandomInt(0, 3)];
+                    if (operation === '/') {
+                        num1 = num2 * getRandomInt(8, 35);
+                    } else if (operation === '-' && num1 < num2) {
+                        [num1, num2] = [num2, num1];
+                    }
+                    break;
+                case 19:
+                case 20: // Niveles 19-20 (Zona de puntaje alto final): Desafío significativo antes de los niveles finales
+                    num1 = getRandomInt(150, 200);
+                    num2 = getRandomInt(12, 50);
+                    operation = ['+', '-', '*', '/'][getRandomInt(0, 3)];
+                    if (operation === '/') {
+                        num1 = num2 * getRandomInt(10, 40);
+                    } else if (operation === '-' && num1 < num2) {
+                        [num1, num2] = [num2, num1];
+                    }
+                    break;
+                case 21:
+                case 22: // Niveles 21-22: Gran aumento en los rangos de números
+                    num1 = getRandomInt(200, 300);
+                    num2 = getRandomInt(15, 60);
+                    operation = ['+', '-', '*', '/'][getRandomInt(0, 3)];
+                    if (operation === '/') {
+                        num1 = num2 * getRandomInt(10, 30);
+                    } else if (operation === '-' && num1 < num2) {
+                        [num1, num2] = [num2, num1];
+                    }
+                    break;
+                case 23:
+                case 24: // Niveles 23-24: Números aún mayores
+                    num1 = getRandomInt(250, 400);
+                    num2 = getRandomInt(20, 70);
+                    operation = ['+', '-', '*', '/'][getRandomInt(0, 3)];
+                    if (operation === '/') {
+                        num1 = num2 * getRandomInt(12, 35);
+                    } else if (operation === '-' && num1 < num2) {
+                        [num1, num2] = [num2, num1];
+                    }
+                    break;
+                case 25:
+                case 26: // Niveles 25-26: Operaciones muy grandes
+                    num1 = getRandomInt(300, 500);
+                    num2 = getRandomInt(25, 80);
+                    operation = ['+', '-', '*', '/'][getRandomInt(0, 3)];
+                    if (operation === '/') {
+                        num1 = num2 * getRandomInt(15, 40);
+                    } else if (operation === '-' && num1 < num2) {
+                        [num1, num2] = [num2, num1];
+                    }
+                    break;
+                case 27:
+                case 28: // Niveles 27-28: Límite superior de los rangos
+                    num1 = getRandomInt(400, 600);
+                    num2 = getRandomInt(30, 90);
+                    operation = ['+', '-', '*', '/'][getRandomInt(0, 3)];
+                    if (operation === '/') {
+                        num1 = num2 * getRandomInt(18, 45);
+                    } else if (operation === '-' && num1 < num2) {
+                        [num1, num2] = [num2, num1];
+                    }
+                    break;
+                case 29:
+                case 30: // Niveles 29-30 (Zona de puntaje alto final): Máximo desafío
+                    num1 = getRandomInt(500, 800);
+                    num2 = getRandomInt(40, 100);
+                    operation = ['+', '-', '*', '/'][getRandomInt(0, 3)];
+                    if (operation === '/') {
+                        num1 = num2 * getRandomInt(20, 50);
+                    } else if (operation === '-' && num1 < num2) {
+                        [num1, num2] = [num2, num1];
+                    }
+                    break;
+                default: // Por si acaso se llega a un nivel no especificado
+                    num1 = getRandomInt(1, 1000);
+                    num2 = getRandomInt(1, 100);
+                    operation = ['+', '-', '*', '/'][getRandomInt(0, 3)];
+                    if (operation === '/') {
+                        num1 = num2 * getRandomInt(1, 50);
+                    } else if (operation === '-' && num1 < num2) {
+                        [num1, num2] = [num2, num1];
+                    }
+                    break;
+            }
+
+            // Calcula la respuesta
+            switch (operation) {
+                case '+': answer = num1 + num2; break;
+                case '-': answer = num1 - num2; break;
+                case '*': answer = num1 * num2; break;
+                case '/': answer = num1 / num2; break;
             }
             
-            questionElement.textContent = questionData.question;
-            currentQuestion = { question: questionData.question, answer: questionData.answer };
+            questionElement.textContent = `¿Cuánto es ${num1} ${operation} ${num2}?`;
+            currentQuestion = { question: questionElement.textContent, answer: answer };
 
-            let options = questionData.options || []; // Use options from specific generators if available
+            options.push(answer);
+            while (options.length < 4) {
+                let wrongAnswer;
+                do {
+                    // Genera respuestas incorrectas cercanas a la correcta, pero no iguales
+                    wrongAnswer = answer + getRandomInt(-Math.max(2, Math.floor(answer * 0.2)), Math.max(2, Math.floor(answer * 0.2)));
+                    // Asegura que no sea 0 si la respuesta correcta no lo es y si la operación no es de resta que pueda resultar en 0
+                    if (wrongAnswer === 0 && answer !== 0) {
+                        wrongAnswer = getRandomInt(1, 10); // Evita 0 si la respuesta no es 0
+                    }
+                    if (wrongAnswer < 0) wrongAnswer = Math.abs(wrongAnswer); // Evita opciones negativas a menos que la respuesta lo sea
+                    // Para división, asegúrate de que no genere decimales si la respuesta es entera
+                    if (operation === '/' && wrongAnswer % 1 !== 0) {
+                        wrongAnswer = Math.round(wrongAnswer); // Redondea al entero más cercano
+                    }
+                } while (options.includes(wrongAnswer) || wrongAnswer === answer);
 
-            if (options.length === 0) { // Generate options if not provided by specific question type
-                options.push(currentQuestion.answer);
-                while (options.length < 4) {
-                    let wrongAnswer;
-                    do {
-                        let range = Math.max(1, Math.floor(Math.abs(currentQuestion.answer) * 0.1));
-                        if (typeof currentQuestion.answer === 'number' && currentQuestion.answer % 1 !== 0) {
-                             range = Math.max(0.1, Math.abs(currentQuestion.answer) * 0.05);
-                             wrongAnswer = (currentQuestion.answer + (Math.random() * 2 - 1) * range).toFixed(1);
-                             wrongAnswer = parseFloat(wrongAnswer);
-                        } else if (typeof currentQuestion.answer === 'string' && currentQuestion.answer.includes('/')) {
-                            const [n, d] = currentQuestion.answer.split('/').map(Number);
-                            let wrongN = n + getRandomInt(-2, 2);
-                            let wrongD = d + getRandomInt(-1, 1);
-                            if (wrongD < 1) wrongD = 1;
-                            wrongAnswer = `${wrongN}/${wrongD}`;
-                            if (wrongAnswer === "0/1") wrongAnswer = "0";
-                        }
-                        else {
-                            wrongAnswer = currentQuestion.answer + getRandomInt(-range, range);
-                        }
-                        
-                        if (wrongAnswer === 0 && currentQuestion.answer !== 0) {
-                            wrongAnswer = getRandomInt(1, 10); 
-                        }
-                        if (typeof wrongAnswer === 'number' && wrongAnswer < 0 && currentQuestion.answer >= 0) {
-                             wrongAnswer = Math.abs(wrongAnswer);
-                        }
-                        
-                    } while (options.includes(wrongAnswer) || wrongAnswer === currentQuestion.answer);
-                    options.push(wrongAnswer);
-                }
+                options.push(Math.round(wrongAnswer)); // Redondea al entero más cercano
             }
-            
             options = shuffleArray(options);
 
             // Rellena los botones de opciones
@@ -1396,55 +1159,27 @@
 
         /**
          * Comprueba si la respuesta seleccionada por el usuario es correcta.
-         * @param {number|string} selectedAnswer - La respuesta elegida por el usuario.
+         * @param {number} selectedAnswer - La respuesta elegida por el usuario.
          */
         function checkAnswer(selectedAnswer) {
             if (!gameActive) return; // Evita responder si el juego no está activo
 
             clearInterval(questionTimerInterval); // Detiene el cronómetro de la pregunta inmediatamente al responder
 
-            // Normalize answers for comparison (especially for fractions, decimals)
-            let correctAnswerNormalized = typeof currentQuestion.answer === 'number' ? currentQuestion.answer : parseFloat(currentQuestion.answer);
-            let selectedAnswerNormalized = typeof selectedAnswer === 'number' ? selectedAnswer : parseFloat(selectedAnswer);
-
-            // Special handling for fraction answers (string format like "X/Y")
-            let isCorrect;
-            if (typeof currentQuestion.answer === 'string' && currentQuestion.answer.includes('/')) {
-                const simplifyFraction = (n, d) => {
-                    if (d === 0) return {n: n, d: 0}; // Handle division by zero case explicitly
-                    const gcd = (a, b) => b === 0 ? a : gcd(b, a % b);
-                    const common = gcd(n, d);
-                    return {n: n / common, d: d / common};
-                };
-                const [cN, cD] = currentQuestion.answer.split('/').map(Number);
-                const [sN, sD] = selectedAnswer.split('/').map(Number);
-                
-                const simplifiedCorrect = simplifyFraction(cN, cD);
-                const simplifiedSelected = simplifyFraction(sN, sD);
-
-                isCorrect = (simplifiedCorrect.n === simplifiedSelected.n && simplifiedCorrect.d === simplifiedSelected.d);
-
-            } else if (typeof currentQuestion.answer === 'number' && currentQuestion.answer % 1 !== 0) { // If original answer is decimal
-                isCorrect = (Math.abs(correctAnswerNormalized - selectedAnswerNormalized) < 0.001); // Tolerance for floats
-            }
-            else { // For integers and other direct comparisons
-                isCorrect = (selectedAnswer == currentQuestion.answer); // Loose comparison for string vs number
-            }
-
             // Deshabilita los botones y da feedback visual
             const optionButtons = optionsContainer.querySelectorAll('.option-button');
             optionButtons.forEach(button => {
                 button.disabled = true;
-                if (button.textContent == currentQuestion.answer) { // Use loose comparison for string vs number, or specific fraction comparison
+                if (parseInt(button.textContent) === currentQuestion.answer) {
                     button.style.backgroundColor = '#27ae60'; // Verde para correcta
-                } else if (button.textContent == selectedAnswer) {
+                } else if (parseInt(button.textContent) === selectedAnswer) {
                     button.style.backgroundColor = '#c0392b'; // Rojo para incorrecta
                 }
             });
 
             // Pequeño retardo para mostrar el feedback visual antes de continuar
             setTimeout(() => {
-                if (isCorrect) {
+                if (selectedAnswer === currentQuestion.answer) {
                     currentScore += 10 * currentLevel; // Puntaje basado en el nivel
                     mapPiecesFound++;
                     revealMapPiece();
@@ -1528,7 +1263,7 @@
          */
         function endGame(won) {
             gameActive = false;
-            clearInterval(timerInterval); // Detiene el temporador total
+            clearInterval(timerInterval); // Detiene el temporizador total
             clearInterval(questionTimerInterval); // Detiene el temporizador de la pregunta
             optionsContainer.innerHTML = ''; // Limpia las opciones
             questionArea.classList.add('hidden'); // Oculta el área de preguntas
@@ -1767,6 +1502,7 @@
             mapModal.style.display = 'none';
         });
 
+        // Event listeners para el nuevo modal de créditos
         creditsToggle.addEventListener('click', () => {
             creditsModal.style.display = 'flex';
         });
@@ -1783,7 +1519,7 @@
             if (event.target == mapModal) {
                 mapModal.style.display = 'none';
             }
-            if (event.target == creditsModal) {
+            if (event.target == creditsModal) { // Para el nuevo modal de créditos
                 creditsModal.style.display = 'none';
             }
         });
